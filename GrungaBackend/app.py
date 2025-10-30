@@ -1,15 +1,18 @@
+import os
 from flask import Flask
-from flask_cors import CORS
-from routes.workout_routes import workout_bp
+from dotenv import load_dotenv
+from routes import createBlueprints
+from services.scheduler_service import startScheduler
 
-app = Flask(__name__)
-CORS(app)
+def createApp():
+    load_dotenv()
+    app = Flask(__name__)
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
+    createBlueprints(app)
+    startScheduler(os.getenv("TZ", "America/Chicago"))
+    return app
 
-@app.get("/")
-def home():
-    return "Grunga backend is running!"
-
-app.register_blueprint(workout_bp)
+app = createApp()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
