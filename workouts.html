@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Grunga — Workouts</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Log Your Workouts</h1>
+  </header>
+
+  <main>
+    <form id="workout-form">
+      <label>Exercise Type:</label>
+      <input type="text" id="type" required placeholder="e.g. Push-ups" />
+      <label>Sets:</label>
+      <input type="number" id="sets" min="1" required />
+      <label>Reps:</label>
+      <input type="number" id="reps" min="1" required />
+      <button type="submit">Add Workout</button>
+    </form>
+
+    <section id="workout-list">
+      <h2>Logged Workouts</h2>
+      <ul></ul>
+    </section>
+  </main>
+
+<nav class="navbar">
+  <a href="index.html">Home</a>
+  <a href="workouts.html">Workouts</a>
+  <a href="boss.html">Boss</a>
+  <a href="friends.html">Friends</a>
+  <a href="badges.html">Badges</a>
+  <a href="help.html">Help</a>
+</nav>
+
+
+  <script src="js/workouts.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "user": "DemoUser",
+  "workouts": [
+    {"date":"2025-10-20","type":"pushups","sets":3,"reps":15,"points":30},
+    {"date":"2025-10-21","type":"squats","sets":3,"reps":20,"points":40}
+  ],
+  "points": {"total":2500,"weekly":320,"daily":50}
+}
