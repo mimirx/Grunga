@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const repsSection = document.getElementById("reps-section");
   const list = document.querySelector("#workout-list ul");
 
-  // Show relevant input fields based on workout type
+  // input fields based on workout type
   typeSelect.addEventListener("change", () => {
     const type = typeSelect.value;
 
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Handle form submission
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
