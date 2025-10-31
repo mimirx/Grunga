@@ -30,18 +30,7 @@ CREATE TABLE pointsLedger (
   refId VARCHAR(64),
   occurredAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_ledger_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
-  CONSTRAINT chk_points_nonneg CHECK (points >= 0),
   INDEX idx_ledger_user_time (userId, occurredAt)
-) ENGINE=InnoDB;
-
--- Optional cached totals to speed up /stats; keep in sync in app code
-CREATE TABLE pointsTotals (
-  userId INT PRIMARY KEY,
-  dailyPoints INT NOT NULL DEFAULT 0,
-  weeklyPoints INT NOT NULL DEFAULT 0,
-  totalPoints INT NOT NULL DEFAULT 0,
-  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_totals_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE friends (
@@ -52,7 +41,6 @@ CREATE TABLE friends (
   CONSTRAINT fk_friends_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
   CONSTRAINT fk_friends_friend FOREIGN KEY (friendUserId) REFERENCES users(userId) ON DELETE CASCADE,
   CONSTRAINT chk_not_self CHECK (userId <> friendUserId),
-  -- prevent (A,B) and (B,A) duplicates via ordered pair
   pairA INT AS (LEAST(userId, friendUserId)) STORED,
   pairB INT AS (GREATEST(userId, friendUserId)) STORED,
   UNIQUE KEY uq_pair (pairA, pairB)
@@ -89,14 +77,11 @@ CREATE TABLE userBadges (
   UNIQUE KEY uq_user_badge (userId, badgeId)
 ) ENGINE=InnoDB;
 
--- Seed demo users
-INSERT INTO users (username, displayName) VALUES
-  ('demo1','Demo One'),
-  ('demo2','Demo Two')
-ON DUPLICATE KEY UPDATE displayName = VALUES(displayName);
-
--- Seed totals rows to match users
-INSERT INTO pointsTotals (userId)
-SELECT u.userId FROM users u
-LEFT JOIN pointsTotals t ON t.userId = u.userId
-WHERE t.userId IS NULL;
+CREATE TABLE pointsTotals (
+  userId INT PRIMARY KEY,
+  dailyPoints INT NOT NULL DEFAULT 0,
+  weeklyPoints INT NOT NULL DEFAULT 0,
+  totalPoints INT NOT NULL DEFAULT 0,
+  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_totals_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
+) ENGINE=InnoDB;

@@ -71,7 +71,6 @@ def executeMany(sql, seq):
         db.executemany(sql, seq)
         return dict(rowCount=db.rowCount())
 
-# Backwards-compat shims for your previous names
 def get_connection():
     return getConnection()
 
