@@ -88,15 +88,3 @@ CREATE TABLE userBadges (
   CONSTRAINT fk_ub_badge FOREIGN KEY (badgeId) REFERENCES badges(badgeId) ON DELETE CASCADE,
   UNIQUE KEY uq_user_badge (userId, badgeId)
 ) ENGINE=InnoDB;
-
--- Seed demo users
-INSERT INTO users (username, displayName) VALUES
-  ('demo1','Demo One'),
-  ('demo2','Demo Two')
-ON DUPLICATE KEY UPDATE displayName = VALUES(displayName);
-
--- Seed totals rows to match users
-INSERT INTO pointsTotals (userId)
-SELECT u.userId FROM users u
-LEFT JOIN pointsTotals t ON t.userId = u.userId
-WHERE t.userId IS NULL;
