@@ -29,7 +29,7 @@ img {
   border-radius: var(--radius);
 }
 
-/* ===== Header ===== */
+
 header {
   background: var(--panel);
   padding: 20px 10px;
@@ -62,7 +62,7 @@ header h1 {
   color: var(--accent-light);
 }
 
-/* ===== Main Content ===== */
+/Main Content
 main {
   flex: 1;
   padding: 30px 20px 100px;
@@ -81,7 +81,7 @@ main {
   transform: scale(1.05);
 }
 
-/* ===== Forms ===== */
+
 form {
   display: flex;
   flex-direction: column;
@@ -127,7 +127,7 @@ form button:hover {
   transform: scale(1.02);
 }
 
-/* ===== Workout List / Scrollable Menu ===== */
+
 #workout-list {
   width: 90%;
   max-width: 400px;
@@ -188,7 +188,7 @@ form button:hover {
   background: var(--accent-glow);
 }
 
-/* ===== Navbar ===== */
+
 .navbar {
   position: fixed;
   bottom: 0;
@@ -216,7 +216,7 @@ form button:hover {
   transform: scale(1.1);
 }
 
-/* ===== Responsive ===== */
+
 @media (max-width: 768px) {
   header h1 {
     font-size: 1.3rem;
