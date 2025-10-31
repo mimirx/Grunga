@@ -1,10 +1,9 @@
-
-
 :root {
   --bg: #0f172a;
   --panel: #111827;
   --accent: #00d38a;
   --accent-light: #33f0a8;
+  --accent-glow: #00ffae;
   --muted: #9ca3af;
   --text-light: #f3f4f6;
   --danger: #ef4444;
@@ -21,6 +20,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  scroll-behavior: smooth;
 }
 
 img {
@@ -29,12 +29,13 @@ img {
   border-radius: var(--radius);
 }
 
-
+/* ===== Header ===== */
 header {
   background: var(--panel);
   padding: 20px 10px;
   text-align: center;
   box-shadow: var(--shadow);
+  border-bottom: 2px solid var(--accent);
 }
 
 header h1 {
@@ -61,10 +62,10 @@ header h1 {
   color: var(--accent-light);
 }
 
-
+/* ===== Main Content ===== */
 main {
   flex: 1;
-  padding: 30px 20px 80px;
+  padding: 30px 20px 100px;
   text-align: center;
 }
 
@@ -80,6 +81,114 @@ main {
   transform: scale(1.05);
 }
 
+/* ===== Forms ===== */
+form {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 18px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.1);
+}
+
+form label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+form input,
+form select {
+  padding: 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: #0b1220;
+  color: #fff;
+  outline: none;
+}
+
+form button {
+  margin-top: 15px;
+  padding: 10px;
+  background: var(--accent);
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+form button:hover {
+  background: var(--accent-glow);
+  transform: scale(1.02);
+}
+
+/* ===== Workout List / Scrollable Menu ===== */
+#workout-list {
+  width: 90%;
+  max-width: 400px;
+  margin: 20px auto 120px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.1);
+}
+
+#workout-list h2 {
+  margin-top: 0;
+  text-align: center;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 8px;
+}
+
+#workout-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+#workout-list li {
+  background: #0b1220;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 4px solid var(--accent);
+  transition: all 0.2s ease;
+}
+
+#workout-list li:hover {
+  background: #111e36;
+  transform: translateX(3px);
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b1220;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 0 10px var(--accent);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-glow);
+}
+
+/* ===== Navbar ===== */
 .navbar {
   position: fixed;
   bottom: 0;
@@ -89,7 +198,7 @@ main {
   padding: 12px 0;
   display: flex;
   justify-content: space-around;
-  border-top: 1px solid #1f2937;
+  border-top: 1px solid var(--accent);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
   z-index: 999;
 }
@@ -103,10 +212,11 @@ main {
 }
 
 .navbar a:hover {
-  color: var(--accent-light);
+  color: var(--accent-glow);
   transform: scale(1.1);
 }
 
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   header h1 {
     font-size: 1.3rem;
@@ -122,6 +232,16 @@ main {
   }
 
   .navbar a {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 600px) {
+  form, #workout-list {
+    width: 95%;
+  }
+  .navbar {
+    flex-wrap: wrap;
     font-size: 0.85rem;
   }
 }
