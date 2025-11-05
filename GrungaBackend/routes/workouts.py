@@ -44,38 +44,41 @@ def createWorkout(userId):
 @bpWorkouts.patch("/workouts/<int:workoutId>")
 def updateWorkout(workoutId):
     p = request.get_json(force=True)
-    sets = int(p.get("sets"))
-    reps = int(p.get("reps"))
+    newSets = int(p.get("sets"))
+    newReps = int(p.get("reps"))
 
-    # get the workout so we also know its type and user
-    row = fetchOne("SELECT userId, workoutType FROM workouts WHERE workoutId = %s", (workoutId,))
+    # fetch old so we can compute delta
+    row = fetchOne("""
+        SELECT userId, workoutType, sets AS oldSets, reps AS oldReps
+        FROM workouts WHERE workoutId = %s
+    """, (workoutId,))
     if not row:
         return jsonify({"error": "Workout not found"}), 404
 
-    execute(
-        "UPDATE workouts SET sets = %s, reps = %s WHERE workoutId = %s",
-        (sets, reps, workoutId)
-    )
+    execute("UPDATE workouts SET sets=%s, reps=%s WHERE workoutId=%s",
+            (newSets, newReps, workoutId))
 
-    # record an edit event (you can choose to add, subtract, or just log)
-    pts = calcWorkoutPoints(row["workoutType"], sets, reps)
-    writePoints(row["userId"], pts, "workoutEdit", workoutId)
+    oldPts = calcWorkoutPoints(row["workoutType"], row["oldSets"], row["oldReps"])
+    newPts = calcWorkoutPoints(row["workoutType"], newSets, newReps)
+    delta = newPts - oldPts
 
-    return jsonify({"ok": True, "newPointsFromEdit": pts})
+    if delta != 0:
+        writePoints(row["userId"], delta, "workoutEdit", workoutId)
+
+    return jsonify({"ok": True, "pointsDelta": delta})
 
 @bpWorkouts.delete("/workouts/<int:workoutId>")
 def deleteWorkout(workoutId):
-    # read before deleting so we can log something meaningful
-    row = fetchOne("SELECT userId, workoutType, sets, reps FROM workouts WHERE workoutId = %s", (workoutId,))
-    execute("DELETE FROM workouts WHERE workoutId = %s", (workoutId,))
+    row = fetchOne("""
+        SELECT userId, workoutType, sets, reps
+        FROM workouts WHERE workoutId=%s
+    """, (workoutId,))
+
+    execute("DELETE FROM workouts WHERE workoutId=%s", (workoutId,))
 
     if row:
-        # Option A (simple log): write 0 points with reason
-        writePoints(row["userId"], 0, "workoutDelete", workoutId)
-
-        # Option B (undo points): uncomment next two lines instead of Option A
-        # pts = -calcWorkoutPoints(row["workoutType"], row["sets"], row["reps"])
-        # writePoints(row["userId"], pts, "workoutDelete", workoutId)
+        pts = -calcWorkoutPoints(row["workoutType"], row["sets"], row["reps"])
+        writePoints(row["userId"], pts, "workoutDelete", workoutId)
 
     return jsonify({"ok": True})
 
