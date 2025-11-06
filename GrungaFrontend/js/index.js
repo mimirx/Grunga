@@ -1,8 +1,5 @@
-// =============================
-// main.js — Grunga Home Logic
-// =============================
 
-// --- DOM Elements ---
+
 const greeting = document.getElementById("greeting");
 const totalPointsEl = document.getElementById("total-points");
 const weeklyPointsEl = document.getElementById("weekly-points");
@@ -12,7 +9,7 @@ const bossArt = document.getElementById("boss-art");
 const canvas = document.getElementById("weeklyChart");
 const ctx = canvas.getContext("2d");
 
-// --- Demo User Data (temporary example) ---
+// demo user
 const user = {
   name: "Demo User",
   totalPoints: 2640,
@@ -32,7 +29,7 @@ function setGreeting() {
   greeting.textContent = `${message}, ${user.name}!`;
 }
 
-// --- Smooth number animation ---
+
 function animateValue(el, start, end, duration = 1000) {
   const range = end - start;
   let startTime;
@@ -45,7 +42,7 @@ function animateValue(el, start, end, duration = 1000) {
   requestAnimationFrame(step);
 }
 
-// --- Draw weekly progress chart ---
+// weekly chart
 function drawWeeklyChart() {
   const labels = ["M", "T", "W", "T", "F", "S", "S"];
   const data = user.weeklyProgress;
@@ -76,7 +73,7 @@ function drawWeeklyChart() {
   });
 }
 
-// --- Boss image hover animation ---
+//Boss image hover animation
 bossArt.addEventListener("mouseenter", () => {
   bossArt.style.filter = "drop-shadow(0 0 20px var(--accent-glow))";
 });
@@ -84,7 +81,6 @@ bossArt.addEventListener("mouseleave", () => {
   bossArt.style.filter = "none";
 });
 
-// --- Run everything on page load ---
 window.addEventListener("DOMContentLoaded", () => {
   setGreeting();
   animateValue(totalPointsEl, 0, user.totalPoints, 1200);
