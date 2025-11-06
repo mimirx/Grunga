@@ -3,6 +3,8 @@ from services.connection import fetchAll
 
 bpBadges = Blueprint("badges", __name__, url_prefix="/api/badges")
 
-@bpBadges.get("")
+@bpBadges.get("/")   # ← was ""
 def listBadges():
-    return jsonify(fetchAll("SELECT badgeId, code, name, description FROM badges"))
+    return jsonify(fetchAll(
+        "SELECT badgeId, code, name, description FROM badges"
+    ))

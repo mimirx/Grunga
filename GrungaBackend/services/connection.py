@@ -13,13 +13,16 @@ POOL = MySQLConnectionPool(
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
     database=os.getenv("DB_NAME"),
-    autocommit=False
+    autocommit=False,
+    charset="utf8mb4",
+    collation="utf8mb4_unicode_ci"
 )
 
 def getConnection():
     conn = POOL.get_connection()
     cur = conn.cursor()
-    cur.execute("SET time_zone = '+00:00'")
+    # ✅ set time zone to Chicago, not UTC
+    cur.execute("SET time_zone = 'America/Chicago'")
     cur.execute("SET sql_safe_updates = 0")
     cur.close()
     return conn

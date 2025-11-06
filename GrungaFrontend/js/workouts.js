@@ -1,55 +1,109 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("workout-form");
-  const typeSelect = document.getElementById("type");
-  const durationSection = document.getElementById("duration-section");
-  const repsSection = document.getElementById("reps-section");
-  const list = document.querySelector("#workout-list ul");
+document.addEventListener('DOMContentLoaded', async () => {
+  const username = 'demo1';                  // adjust if you want a different user
+  let userId = null;
+  let apiOk = false;
 
-  // input fields based on workout type
-  typeSelect.addEventListener("change", () => {
-    const type = typeSelect.value;
-
-    if (["run", "bike", "walk", "swim"].includes(type)) {
-      durationSection.style.display = "block";
-      repsSection.style.display = "none";
-    } else if (["pushups", "squats", "lunges", "crunches"].includes(type)) {
-      repsSection.style.display = "block";
-      durationSection.style.display = "none";
-    } else {
-      repsSection.style.display = "none";
-      durationSection.style.display = "none";
+  async function pingApi() {
+    try {
+      const r = await apiGet('/health');     // from api.js
+      return !!(r && r.ok);
+    } catch {
+      return false;
     }
-  });
+  }
 
+  async function loadUser() {
+    const u = await apiGet(`/users/${username}`);
+    if (!u || !u.userId) throw new Error('User not found in API');
+    userId = u.userId;
+  }
 
-  form.addEventListener("submit", (e) => {
+  function tbody() {
+    return document.getElementById('workout-rows');
+  }
+
+  function getEl(id) {
+    return document.getElementById(id);
+  }
+
+  function ensureDom() {
+    const need = [
+      'workout-form',
+      'workout-type',
+      'workout-date',
+      'workout-sets',
+      'workout-reps',
+      'workout-rows'
+    ];
+    const missing = need.filter(id => !getEl(id));
+    if (missing.length) {
+      console.warn('[workouts.js] Missing DOM ids:', missing.join(', '));
+    }
+  }
+
+  async function loadWorkoutsApi() {
+    const rows = await apiGet(`/users/${userId}/workouts`);
+    renderRows(rows || []);
+  }
+
+  async function createWorkoutApi(e) {
     e.preventDefault();
+    const wDate = getEl('workout-date')?.value || new Date().toISOString().slice(0,10);
+    const wType = getEl('workout-type')?.value || 'pushups';
+    const sets  = Number(getEl('workout-sets')?.value || 0);
+    const reps  = Number(getEl('workout-reps')?.value || 0);
 
-    const type = typeSelect.value;
-    let points = 0;
-    let details = "";
+    await apiPost(`/users/${userId}/workouts`, { workoutDate: wDate, workoutType: wType, sets, reps });
+    await loadWorkoutsApi();
+    getEl('workout-form')?.reset?.();
+  }
 
-    if (["run", "bike", "walk", "swim"].includes(type)) {
-      const duration = parseInt(document.getElementById("duration").value);
-      if (!duration || duration <= 0) return alert("Enter workout duration!");
-      let multiplier = 1;
-      if (type === "run" || type === "swim") multiplier = 2;
-      else if (type === "bike" || type === "walk") multiplier = 1.5;
-      points = duration * multiplier;
-      details = `${duration} mins`;
-    } else {
-      const reps = parseInt(document.getElementById("reps").value);
-      if (!reps || reps <= 0) return alert("Enter number of reps!");
-      points = reps * 1; // x1 for bodyweight workouts
-      details = `${reps} reps`;
+  function loadWorkoutsDemo() {
+    const demo = [
+      { workoutDate: '2025-10-20', workoutType: 'pushups', sets: 3, reps: 15 },
+      { workoutDate: '2025-10-21', workoutType: 'squats',  sets: 3, reps: 20 }
+    ];
+    renderRows(demo);
+  }
+
+  function createWorkoutDemo(e) {
+    e.preventDefault();
+    console.log('[workouts.js] Demo mode: workout would be created.');
+  }
+
+  function renderRows(rows) {
+    const body = tbody();
+    if (!body) return;
+    body.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.workoutDate ?? ''}</td>
+        <td>${r.workoutType ?? ''}</td>
+        <td>${r.sets ?? ''}</td>
+        <td>${r.reps ?? ''}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  ensureDom();
+
+  apiOk = await pingApi();
+  if (apiOk) {
+    try {
+      await loadUser();
+      await loadWorkoutsApi();
+      getEl('workout-form')?.addEventListener('submit', createWorkoutApi);
+      console.log('[workouts.js] Using BACKEND API mode.');
+    } catch (err) {
+      console.warn('[workouts.js] API mode failed, falling back to demo.', err);
+      loadWorkoutsDemo();
+      getEl('workout-form')?.addEventListener('submit', createWorkoutDemo);
     }
-
-    const li = document.createElement("li");
-    li.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} — ${details} → ${points} pts`;
-    list.appendChild(li);
-
-    form.reset();
-    durationSection.style.display = "none";
-    repsSection.style.display = "none";
-  });
+  } else {
+    console.warn('[workouts.js] Backend not reachable. Using DEMO mode.');
+    loadWorkoutsDemo();
+    getEl('workout-form')?.addEventListener('submit', createWorkoutDemo);
+  }
 });

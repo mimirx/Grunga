@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from flask import Flask
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 from routes import createBlueprints
 from services.scheduler_service import startScheduler
@@ -11,7 +12,7 @@ def createApp():
     load_dotenv(dotenv_path=env_path)
 
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     from config import DB_CONFIG
     print(f"[DB CONFIG] user={DB_CONFIG.get('user')} has_pass={bool(DB_CONFIG.get('password'))}")

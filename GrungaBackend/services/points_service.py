@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 from .connection import fetchOne, execute
+from .connection import Db
 
 # Points rule (we can imorove/evolve it later)
 def calcWorkoutPoints(workoutType: str, sets: int, reps: int) -> int:
@@ -15,57 +16,50 @@ def calcWorkoutPoints(workoutType: str, sets: int, reps: int) -> int:
     return sets * reps
 
 
-# Write a ledger entry and refresh cached totals ----------------------
 def writePoints(userId: int, points: int, reason: str, refId: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Adds a row in pointsLedger and synchronizes pointsTotals (daily/weekly/total).
-    Returns { lastRowId, rowCount } from the insert.
-    """
-    # Insert a ledger row
-    ins = execute(
-        """
-        INSERT INTO pointsLedger (userId, points, reason, refId)
-        VALUES (%s, %s, %s, %s)
-        """,
-        (userId, points, reason, refId)
-    )
+    with Db() as db:
+        # 1) ledger insert
+        db.execute(
+            "INSERT INTO pointsLedger (userId, points, reason, refId) VALUES (%s, %s, %s, %s)",
+            (userId, points, reason, refId)
+        )
+        last_id = db.lastRowId()
 
-    # Ensure a pointsTotals row exists for this user
-    execute(
-        """
-        INSERT INTO pointsTotals (userId)
-        SELECT %s FROM DUAL
-        WHERE NOT EXISTS (SELECT 1 FROM pointsTotals WHERE userId = %s)
-        """,
-        (userId, userId)
-    )
+        # 2) ensure totals row
+        db.execute(
+            """
+            INSERT INTO pointsTotals (userId)
+            SELECT %s FROM DUAL
+            WHERE NOT EXISTS (SELECT 1 FROM pointsTotals WHERE userId = %s)
+            """,
+            (userId, userId)
+        )
 
-    # Recalculate cached totals from the ledger
-    #     (simple and reliable; you can optimize later)
-    execute(
-        """
-        UPDATE pointsTotals t
-        JOIN (
-          SELECT
-            userId,
-            COALESCE(SUM(points), 0) AS totalPoints,
-            COALESCE(SUM(CASE WHEN DATE(occurredAt) = CURRENT_DATE() THEN points END), 0) AS dailyPoints,
-            COALESCE(SUM(
-              CASE WHEN YEARWEEK(occurredAt, 1) = YEARWEEK(CURRENT_DATE(), 1) THEN points END
-            ), 0) AS weeklyPoints
-          FROM pointsLedger
-          WHERE userId = %s
-          GROUP BY userId
-        ) s ON s.userId = t.userId
-        SET t.totalPoints  = s.totalPoints,
-            t.dailyPoints  = s.dailyPoints,
-            t.weeklyPoints = s.weeklyPoints,
-            t.updatedAt    = NOW()
-        """,
-        (userId,)
-    )
+        # 3) recompute cached totals (see Fix #2 below for Chicago time correctness)
+        db.execute(
+            """
+            UPDATE pointsTotals t
+            JOIN (
+              SELECT
+                userId,
+                COALESCE(SUM(points), 0) AS totalPoints,
+                COALESCE(SUM(CASE WHEN DATE(occurredAt) = CURRENT_DATE() THEN points END), 0) AS dailyPoints,
+                COALESCE(SUM(
+                  CASE WHEN YEARWEEK(occurredAt, 1) = YEARWEEK(CURRENT_DATE(), 1) THEN points END
+                ), 0) AS weeklyPoints
+              FROM pointsLedger
+              WHERE userId = %s
+              GROUP BY userId
+            ) s ON s.userId = t.userId
+            SET t.totalPoints  = s.totalPoints,
+                t.dailyPoints  = s.dailyPoints,
+                t.weeklyPoints = s.weeklyPoints,
+                t.updatedAt    = NOW()
+            """,
+            (userId,)
+        )
 
-    return ins
+        return {"lastRowId": last_id, "rowCount": 1}
 
 
 # Read the cached totals (compute if missing)
