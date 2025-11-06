@@ -29,7 +29,6 @@ img {
   border-radius: var(--radius);
 }
 
-
 header {
   background: var(--panel);
   padding: 20px 10px;
@@ -62,7 +61,7 @@ header h1 {
   color: var(--accent-light);
 }
 
-/Main Content
+/* Main Content */
 main {
   flex: 1;
   padding: 30px 20px 100px;
@@ -80,7 +79,6 @@ main {
 #boss-art:hover {
   transform: scale(1.05);
 }
-
 
 form {
   display: flex;
@@ -126,7 +124,6 @@ form button:hover {
   background: var(--accent-glow);
   transform: scale(1.02);
 }
-
 
 #workout-list {
   width: 90%;
@@ -188,7 +185,6 @@ form button:hover {
   background: var(--accent-glow);
 }
 
-
 .navbar {
   position: fixed;
   bottom: 0;
@@ -215,7 +211,6 @@ form button:hover {
   color: var(--accent-glow);
   transform: scale(1.1);
 }
-
 
 @media (max-width: 768px) {
   header h1 {
@@ -244,4 +239,48 @@ form button:hover {
     flex-wrap: wrap;
     font-size: 0.85rem;
   }
+}
+
+
+.boss-section {
+  margin-bottom: 30px;
+  animation: fadeIn 1s ease;
+}
+
+.boss-caption {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: -8px;
+}
+
+.chart-section {
+  margin-top: 20px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeIn 1.2s ease;
+}
+
+.chart-section h2 {
+  color: var(--accent-light);
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+/* Subtle Boss Glow */
+#boss-art {
+  transition: transform var(--transition), filter var(--transition);
+}
+#boss-art:hover {
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+
+/* Header Fade Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
