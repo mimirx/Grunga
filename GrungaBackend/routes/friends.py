@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from services.connection import fetchAll, execute
+from services.connection import fetchAll, fetchOne, execute
 
 bpFriends = Blueprint("friends", __name__, url_prefix="/api/friends")
 

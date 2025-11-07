@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from services.connection import fetchAll, fetchOne, execute
+from mysql.connector.errors import ProgrammingError
 
 bpUsers = Blueprint("users", __name__, url_prefix="/api")
 
@@ -7,6 +8,96 @@ bpUsers = Blueprint("users", __name__, url_prefix="/api")
 def _err(message, status=400):
     return jsonify(dict(error=message)), status
 
+
+# --- helpers ---------------------------------------------------------------
+
+def _table_has_column(table: str, column: str) -> bool:
+    """
+    Return True if `table`.`column` exists in the current DB.
+    This lets us run on older dev schemas without crashing.
+    """
+    row = fetchOne(
+        """
+        SELECT 1
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = %s
+          AND COLUMN_NAME = %s
+        LIMIT 1
+        """,
+        (table, column),
+    )
+    return bool(row)
+
+
+def _users_select_fields():
+    # Always safe columns:
+    fields = ["userId", "username", "displayName"]
+    # Optional (only include if present):
+    if _table_has_column("users", "email"):
+        fields.append("email")
+    if _table_has_column("users", "createdAt"):
+        fields.append("createdAt")
+    return ", ".join(fields)
+
+
+def _get_totals_from_pointsTotals(userId: int):
+    # Try pointsTotals first (fast path)
+    try:
+        row = fetchOne(
+            "SELECT dailyPoints, weeklyPoints, totalPoints FROM pointsTotals WHERE userId=%s",
+            (userId,),
+        )
+        return row if row else None
+    except ProgrammingError:
+        # Table or columns missing -> fall back
+        return None
+
+
+def _get_totals_fallback_from_ledger(userId: int):
+    # Chicago boundaries are already handled by the session time_zone.
+    # Compute totals directly from pointsLedger.
+    row = fetchOne(
+        """
+        SELECT
+          COALESCE(SUM(points), 0)                                             AS totalPoints,
+          COALESCE(SUM(CASE WHEN DATE(occurredAt) = CURRENT_DATE() THEN points END), 0) AS dailyPoints,
+          COALESCE(SUM(
+             CASE WHEN YEARWEEK(occurredAt, 1) = YEARWEEK(CURRENT_DATE(), 1)
+             THEN points END
+          ), 0) AS weeklyPoints
+        FROM pointsLedger
+        WHERE userId = %s
+        """,
+        (userId,)
+    ) or {"dailyPoints": 0, "weeklyPoints": 0, "totalPoints": 0}
+
+    # Ensure a row in pointsTotals if the table exists
+    try:
+        execute(
+            """
+            INSERT INTO pointsTotals (userId, dailyPoints, weeklyPoints, totalPoints)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+              dailyPoints = VALUES(dailyPoints),
+              weeklyPoints = VALUES(weeklyPoints),
+              totalPoints = VALUES(totalPoints),
+              updatedAt = NOW()
+            """,
+            (userId, row["dailyPoints"], row["weeklyPoints"], row["totalPoints"])
+        )
+    except ProgrammingError:
+        # pointsTotals table not present on this dev DB; that's fine.
+        pass
+
+    return dict(
+        dailyPoints=row["dailyPoints"],
+        weeklyPoints=row["weeklyPoints"],
+        totalPoints=row["totalPoints"],
+    )
+
+
+# --- routes ----------------------------------------------------------------
 
 @bpUsers.get("/health")
 def health():
@@ -19,33 +110,25 @@ def listOrSearchUsers():
     GET /api/users
     Optional: ?q=substr  -> case-insensitive search on username/displayName
     """
+    fields = _users_select_fields()
     q = (request.args.get("q") or "").strip()
     if q:
         like = f"%{q}%"
         rows = fetchAll(
-            "SELECT userId, username, displayName, email "
-            "FROM users "
-            "WHERE username LIKE %s OR displayName LIKE %s "
-            "ORDER BY userId",
+            f"SELECT {fields} FROM users WHERE username LIKE %s OR displayName LIKE %s ORDER BY userId",
             (like, like),
         )
         return jsonify(rows)
 
-    rows = fetchAll(
-        "SELECT userId, username, displayName, email "
-        "FROM users ORDER BY userId"
-    )
+    rows = fetchAll(f"SELECT {fields} FROM users ORDER BY userId")
     return jsonify(rows)
 
 
 @bpUsers.get("/users/<string:username>")
 def getUserByUsername(username: str):
-    """
-    GET /api/users/<username>
-    """
+    fields = _users_select_fields()
     row = fetchOne(
-        "SELECT userId, username, displayName, email, createdAt "
-        "FROM users WHERE username=%s",
+        f"SELECT {fields} FROM users WHERE username=%s",
         (username,),
     )
     return (jsonify(row), 200) if row else _err("User not found", 404)
@@ -53,12 +136,9 @@ def getUserByUsername(username: str):
 
 @bpUsers.get("/users/<int:userId>")
 def getUserById(userId: int):
-    """
-    GET /api/users/<int:userId>
-    """
+    fields = _users_select_fields()
     row = fetchOne(
-        "SELECT userId, username, displayName, email, createdAt "
-        "FROM users WHERE userId=%s",
+        f"SELECT {fields} FROM users WHERE userId=%s",
         (userId,),
     )
     return (jsonify(row), 200) if row else _err("User not found", 404)
@@ -68,7 +148,7 @@ def getUserById(userId: int):
 def createUser():
     """
     POST /api/users
-    Body: { "username": "...", "displayName": "...", "email": "..." }
+    Body: { "username": "...", "displayName": "...", "email": "..." }  # email optional, ignored if column missing
     """
     data = request.get_json(force=True) or {}
     username = (data.get("username") or "").strip()
@@ -82,20 +162,28 @@ def createUser():
     if exists:
         return _err("username already exists", 409)
 
-    res = execute(
-        "INSERT INTO users (username, displayName, email) VALUES (%s,%s,%s)",
-        (username, displayName, email),
-    )
+    # Build INSERT depending on which columns exist
+    if _table_has_column("users", "email"):
+        res = execute(
+            "INSERT INTO users (username, displayName, email) VALUES (%s,%s,%s)",
+            (username, displayName, email),
+        )
+    else:
+        res = execute(
+            "INSERT INTO users (username, displayName) VALUES (%s,%s)",
+            (username, displayName),
+        )
     newId = res["lastRowId"]
 
-    # ensure a totals row exists
-    execute("INSERT IGNORE INTO pointsTotals (userId) VALUES (%s)", (newId,))
+    # ensure a totals row if table exists
+    try:
+        execute("INSERT IGNORE INTO pointsTotals (userId) VALUES (%s)", (newId,))
+    except ProgrammingError:
+        pass
 
-    row = fetchOne(
-        "SELECT userId, username, displayName, email, createdAt "
-        "FROM users WHERE userId=%s",
-        (newId,),
-    )
+    # Return safe fields only
+    fields = _users_select_fields()
+    row = fetchOne(f"SELECT {fields} FROM users WHERE userId=%s", (newId,))
     return jsonify(row), 201
 
 
@@ -103,32 +191,30 @@ def createUser():
 def updateUser(userId: int):
     """
     PATCH /api/users/<userId>
-    Body can include { "displayName": "...", "email": "..." }
+    Body can include { "displayName": "...", "email": "..." } (email ignored if column missing)
     """
     data = request.get_json(force=True) or {}
     displayName = data.get("displayName", None)
     email = data.get("email", None)
-
-    if displayName is None and email is None:
-        return _err("Provide displayName and/or email to update")
 
     sets = []
     params = []
     if displayName is not None:
         sets.append("displayName=%s")
         params.append(displayName.strip())
-    if email is not None:
+
+    if email is not None and _table_has_column("users", "email"):
         sets.append("email=%s")
         params.append((email or "").strip() or None)
-    params.append(userId)
 
+    if not sets:
+        return _err("Provide fields to update")
+
+    params.append(userId)
     execute(f"UPDATE users SET {', '.join(sets)} WHERE userId=%s", tuple(params))
 
-    row = fetchOne(
-        "SELECT userId, username, displayName, email, createdAt "
-        "FROM users WHERE userId=%s",
-        (userId,),
-    )
+    fields = _users_select_fields()
+    row = fetchOne(f"SELECT {fields} FROM users WHERE userId=%s", (userId,))
     return (jsonify(row), 200) if row else _err("User not found", 404)
 
 
@@ -136,56 +222,50 @@ def updateUser(userId: int):
 def getPoints(userId: int):
     """
     GET /api/users/<userId>/points
-    Keeps your original shape. Falls back to zeros if row missing.
+    Returns {dailyPoints, weeklyPoints, totalPoints}.
+    Falls back to computing from pointsLedger if pointsTotals is missing/empty.
     """
-    row = fetchOne(
-        "SELECT dailyPoints, weeklyPoints, totalPoints FROM pointsTotals WHERE userId=%s",
-        (userId,),
-    )
+    row = _get_totals_from_pointsTotals(userId)
     if not row:
-        # ensure a row exists so frontend doesn't break later
-        execute("INSERT IGNORE INTO pointsTotals (userId) VALUES (%s)", (userId,))
-        row = dict(dailyPoints=0, weeklyPoints=0, totalPoints=0)
+        row = _get_totals_fallback_from_ledger(userId)
     return jsonify(row or {"dailyPoints": 0, "weeklyPoints": 0, "totalPoints": 0})
-
 
 
 @bpUsers.get("/users/<int:userId>/totals")
 def getUserTotals(userId: int):
     """
     GET /api/users/<userId>/totals
-    Same values but with keys {daily, weekly, total} (nice for dashboards).
+    Returns {daily, weekly, total}.
     """
-    row = fetchOne(
-        "SELECT userId, dailyPoints AS daily, weeklyPoints AS weekly, "
-        "totalPoints AS total, updatedAt "
-        "FROM pointsTotals WHERE userId=%s",
-        (userId,),
-    )
-    if not row:
-        execute("INSERT IGNORE INTO pointsTotals (userId) VALUES (%s)", (userId,))
-        row = fetchOne(
-            "SELECT userId, dailyPoints AS daily, weeklyPoints AS weekly, "
-            "totalPoints AS total, updatedAt "
-            "FROM pointsTotals WHERE userId=%s",
-            (userId,),
-        )
-    return jsonify(row)
+    pts = _get_totals_from_pointsTotals(userId)
+    if not pts:
+        pts = _get_totals_fallback_from_ledger(userId)
+
+    return jsonify({
+        "userId": userId,
+        "daily": pts.get("dailyPoints", 0),
+        "weekly": pts.get("weeklyPoints", 0),
+        "total": pts.get("totalPoints", 0),
+    })
 
 
 @bpUsers.get("/users/<int:userId>/friends")
 def listFriends(userId: int):
     """
     GET /api/users/<userId>/friends
-    Returns all friend user profiles for a given user.
+    Returns all friend profiles for a given user.
+    Only selects columns that definitely exist.
     """
+    # Only select safe columns from users table
     rows = fetchAll(
-        "SELECT u.userId, u.username, u.displayName, u.email "
-        "FROM friends f "
-        "JOIN users u "
-        "  ON (u.userId = CASE WHEN f.userId = %s THEN f.friendUserId ELSE f.userId END) "
-        "WHERE f.userId = %s OR f.friendUserId = %s "
-        "ORDER BY u.userId",
+        """
+        SELECT u.userId, u.username, u.displayName
+        FROM friends f
+        JOIN users u
+          ON (u.userId = CASE WHEN f.userId = %s THEN f.friendUserId ELSE f.userId END)
+        WHERE f.userId = %s OR f.friendUserId = %s
+        ORDER BY u.userId
+        """,
         (userId, userId, userId),
     )
     return jsonify(rows)

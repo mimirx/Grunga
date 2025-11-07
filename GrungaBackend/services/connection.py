@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector.pooling import MySQLConnectionPool
+from datetime import datetime
+import pytz   # <-- make sure pytz is installed (pip install pytz)
 
 load_dotenv()
 
@@ -15,14 +17,25 @@ POOL = MySQLConnectionPool(
     database=os.getenv("DB_NAME"),
     autocommit=False,
     charset="utf8mb4",
-    collation="utf8mb4_unicode_ci"
+    collation="utf8mb4_unicode_ci",
 )
+
+def _chicago_offset():
+    tz = pytz.timezone("America/Chicago")
+    now_ct = datetime.now(tz)
+    off = now_ct.utcoffset()  # timedelta
+    # off can be negative; format ±HH:MM
+    total_minutes = int(off.total_seconds() // 60)
+    sign = '+' if total_minutes >= 0 else '-'
+    h = abs(total_minutes) // 60
+    m = abs(total_minutes) % 60
+    return f"{sign}{h:02d}:{m:02d}"
 
 def getConnection():
     conn = POOL.get_connection()
     cur = conn.cursor()
-    # ✅ set time zone to Chicago, not UTC
-    cur.execute("SET time_zone = 'America/Chicago'")
+    # Use current offset instead of named zone, so no tz tables needed
+    cur.execute(f"SET time_zone = '{_chicago_offset()}'")
     cur.execute("SET sql_safe_updates = 0")
     cur.close()
     return conn
@@ -68,32 +81,3 @@ def execute(sql, params=None):
     with Db() as db:
         db.execute(sql, params)
         return dict(lastRowId=db.lastRowId(), rowCount=db.rowCount())
-
-def executeMany(sql, seq):
-    with Db() as db:
-        db.executemany(sql, seq)
-        return dict(rowCount=db.rowCount())
-
-def get_connection():
-    return getConnection()
-
-from contextlib import contextmanager
-@contextmanager
-def db_cursor(commit=False):
-    conn = None
-    cur = None
-    try:
-        conn = getConnection()
-        cur = conn.cursor(dictionary=True)
-        yield cur
-        if commit:
-            conn.commit()
-    except Exception:
-        if conn:
-            conn.rollback()
-        raise
-    finally:
-        if cur:
-            cur.close()
-        if conn and conn.is_connected():
-            conn.close()
