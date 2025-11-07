@@ -284,3 +284,46 @@ form button:hover {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/ workout talbe
+#workout-list table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  color: var(--text-light);
+  background: #0b1220;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.1);
+}
+
+#workout-list th,
+#workout-list td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(0, 255, 170, 0.15);
+  text-align: center;
+}
+
+#workout-list th {
+  color: var(--accent-light);
+  font-weight: bold;
+  background: rgba(0, 255, 170, 0.08);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+#workout-list tr:last-child td {
+  border-bottom: none;
+}
+
+#workout-list tr:hover {
+  background: #111e36;
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+/* Soft glow effect on hover */
+#workout-list tr:hover td {
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
+}
+
