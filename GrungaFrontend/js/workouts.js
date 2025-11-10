@@ -1,3 +1,5 @@
+import { apiGet, apiPost } from "./api.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   const form = document.getElementById("workout-form");
   const typeSelect = document.getElementById("type");
@@ -6,73 +8,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   const list = document.querySelector("#workout-list ul");
   const username = "demo1";
   let userId = null;
-  let apiOk = false;
 
-  async function pingApi() {
-    try {
-      const res = await apiGet("/health");
-      return !!(res && res.ok);
-    } catch {
-      return false;
-    }
-  }
-
-  async function loadUser() {
-    const u = await apiGet(`/users/${username}`);
-    if (!u || !u.userId) throw new Error("User not found in API");
-    userId = u.userId;
-  }
-
-  async function loadWorkoutsApi() {
-    const rows = await apiGet(`/users/${userId}/workouts`);
-    renderRows(rows || []);
-  }
-
-  async function createWorkoutApi(e) {
-    e.preventDefault();
-
-    const type = typeSelect.value;
-    let sets = 1;
-    let reps = 0;
-
-    if (["run", "bike", "walk", "swim"].includes(type)) {
-      const duration = parseInt(document.getElementById("duration").value);
-      if (!duration || duration <= 0) return alert("Enter workout duration!");
-      reps = duration;
-    } else {
-      const repCount = parseInt(document.getElementById("reps").value);
-      if (!repCount || repCount <= 0) return alert("Enter number of reps!");
-      reps = repCount;
-    }
-
-    await apiPost(`/users/${userId}/workouts`, {
-      workoutDate: new Date().toISOString().slice(0, 10),
-      workoutType: type,
-      sets,
-      reps
-    });
-
-    await loadWorkoutsApi(); // refresh list
-    form.reset();
-    durationSection.style.display = "none";
-    repsSection.style.display = "none";
-  }
+  const cardio = new Set(["run","bike","walk","swim"]);
+  const strength = new Set(["pushups","squats","lunges","crunches"]);
 
   function renderRows(rows) {
     list.innerHTML = "";
-    rows.forEach(r => {
+    (rows || []).forEach(r => {
+      const d = typeof r.workoutDate === "string" ? r.workoutDate : new Date(r.workoutDate).toISOString().slice(0,10);
+      const isCardio = cardio.has(r.workoutType);
+      const txt = isCardio ? `${r.workoutType} — ${r.reps} min (${d})` : `${r.workoutType} — ${r.sets} x ${r.reps} (${d})`;
       const li = document.createElement("li");
-      li.textContent = `${r.workoutType} — ${r.reps} reps (on ${r.workoutDate})`;
+      li.textContent = txt;
       list.appendChild(li);
     });
   }
 
   typeSelect.addEventListener("change", () => {
-    const type = typeSelect.value;
-    if (["run", "bike", "walk", "swim"].includes(type)) {
+    const t = typeSelect.value;
+    if (cardio.has(t)) {
       durationSection.style.display = "block";
       repsSection.style.display = "none";
-    } else if (["pushups", "squats", "lunges", "crunches"].includes(type)) {
+    } else if (strength.has(t)) {
       repsSection.style.display = "block";
       durationSection.style.display = "none";
     } else {
@@ -81,17 +38,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  apiOk = await pingApi();
-  if (apiOk) {
-    try {
-      await loadUser();
-      await loadWorkoutsApi();
-      form.addEventListener("submit", createWorkoutApi);
-      console.log("[Grunga] Using backend API mode.");
-    } catch (err) {
-      console.warn("[Grunga] API mode failed.", err);
-    }
-  } else {
-    console.warn("[Grunga] Backend unreachable.");
+  async function loadUser() {
+    const u = await apiGet(`/users/${username}`);
+    userId = u.userId;
   }
+
+  async function loadWorkouts() {
+    const rows = await apiGet(`/users/${userId}/workouts`);
+    renderRows(rows);
+  }
+
+  async function refreshTotalsIfPresent() {
+    const totalEl = document.getElementById("total-points");
+    const weeklyEl = document.getElementById("weekly-points");
+    const dailyEl = document.getElementById("daily-points");
+    const streakEl = document.getElementById("streak-count");
+    if (!totalEl && !weeklyEl && !dailyEl && !streakEl) return;
+    const pts = await apiGet(`/users/${userId}/points`);
+    if (totalEl) totalEl.textContent = pts.totalPoints ?? 0;
+    if (weeklyEl) weeklyEl.textContent = pts.weeklyPoints ?? 0;
+    if (dailyEl) dailyEl.textContent = pts.dailyPoints ?? 0;
+    if (streakEl) streakEl.textContent = pts.streak ?? 0;
+  }
+
+  async function createWorkout(e) {
+    e.preventDefault();
+    const t = typeSelect.value;
+    if (!t) { alert("Select a workout type."); return; }
+
+    let sets = 1;
+    let reps = 0;
+
+    if (cardio.has(t)) {
+      const duration = parseInt(document.getElementById("duration").value, 10);
+      if (!Number.isFinite(duration) || duration <= 0) { alert("Enter duration in minutes."); return; }
+      reps = duration;
+    } else if (strength.has(t)) {
+      const s = parseInt(document.getElementById("sets").value, 10);
+      const r = parseInt(document.getElementById("reps").value, 10);
+      if (!Number.isFinite(s) || s <= 0) { alert("Enter sets."); return; }
+      if (!Number.isFinite(r) || r <= 0) { alert("Enter reps."); return; }
+      sets = s;
+      reps = r;
+    } else {
+      alert("Unsupported workout type.");
+      return;
+    }
+
+    await apiPost(`/users/${userId}/workouts`, {
+      workoutDate: new Date().toISOString().slice(0,10),
+      workoutType: t,
+      sets,
+      reps
+    });
+
+    await loadWorkouts();
+    await refreshTotalsIfPresent();
+    form.reset();
+    durationSection.style.display = "none";
+    repsSection.style.display = "none";
+  }
+
+  await loadUser();
+  await loadWorkouts();
+  form.addEventListener("submit", createWorkout);
 });

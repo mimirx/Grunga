@@ -1,12 +1,12 @@
-const API_BASE = (window.API_BASE || 'http://127.0.0.1:5000/api');
+export const API_BASE = (window.API_BASE || 'http://127.0.0.1:5000/api');
 
-async function apiGet(path) {
+export async function apiGet(path) {
   const r = await fetch(API_BASE + path, { credentials: 'omit' });
   if (!r.ok) throw new Error(`GET ${path} -> ${r.status}`);
   return r.json();
 }
 
-async function apiPost(path, body) {
+export async function apiPost(path, body) {
   const r = await fetch(API_BASE + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -16,7 +16,7 @@ async function apiPost(path, body) {
   return r.json();
 }
 
-async function apiPatch(path, body) {
+export async function apiPatch(path, body) {
   const r = await fetch(API_BASE + path, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -26,7 +26,7 @@ async function apiPatch(path, body) {
   return r.json();
 }
 
-async function apiDelete(path) {
+export async function apiDelete(path) {
   const r = await fetch(API_BASE + path, { method: 'DELETE' });
   if (!r.ok) throw new Error(`DELETE ${path} -> ${r.status}`);
   return r.json();

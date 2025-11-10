@@ -1,27 +1,36 @@
-import os
-from pathlib import Path
-from flask import Flask
-from dotenv import load_dotenv
+from flask import Flask, jsonify
 from flask_cors import CORS
+import os
 
-from routes import createBlueprints
-from services.scheduler_service import startScheduler
+from routes.workouts import bpWorkouts 
 
 def createApp():
-    env_path = Path(__file__).parent / ".env"
-    load_dotenv(dotenv_path=env_path)
-
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5500", "http://localhost:5500"]}})
 
-    from config import DB_CONFIG
-    print(f"[DB CONFIG] user={DB_CONFIG.get('user')} has_pass={bool(DB_CONFIG.get('password'))}")
+    @app.route("/api/health")
+    def health():
+        return jsonify({"ok": True})
 
-    createBlueprints(app)
-    startScheduler(os.getenv("TZ", "America/Chicago"))
+    # ✅ register blueprint correctly
+    app.register_blueprint(bpWorkouts, url_prefix="/api")
+
+    @app.errorhandler(Exception)
+    def onError(e):
+        return jsonify({"error": str(e)}), 500
+
+    try:
+        from services.scheduler_service import startScheduler
+        startScheduler(tz="America/Chicago")
+    except Exception:
+        pass
+
     return app
+
 
 app = createApp()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "5000"))
+    app.run(host=host, port=port, debug=True)

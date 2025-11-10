@@ -7,12 +7,10 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header>
-    <h1>Log Your Workouts</h1>
-  </header>
+  <header><h1>Log Your Workouts</h1></header>
 
   <main>
-    <form id="workout-form">
+    <form id="workout-form" class="workout-form">
       <label for="type">Workout Type:</label>
       <select id="type" required>
         <option value="">-- Select Workout --</option>
@@ -20,20 +18,22 @@
         <option value="bike">Bike</option>
         <option value="walk">Walk</option>
         <option value="swim">Swim</option>
-        <option value="pushups">Push-ups</option>
+        <option value="pushups">Pushups</option>
         <option value="squats">Squats</option>
         <option value="lunges">Lunges</option>
         <option value="crunches">Crunches</option>
       </select>
 
-      <div id="duration-section" style="display:none;">
-        <label for="duration">Time (minutes):</label>
-        <input type="number" id="duration" min="1" placeholder="e.g. 30" />
+      <div id="reps-section" style="display:none">
+        <label for="sets">Sets</label>
+        <input id="sets" type="number" min="1" step="1" value="1" />
+        <label for="reps">Reps</label>
+        <input id="reps" type="number" min="1" step="1" value="10" />
       </div>
 
-      <div id="reps-section" style="display:none;">
-        <label for="reps">Reps:</label>
-        <input type="number" id="reps" min="1" placeholder="e.g. 20" />
+      <div id="duration-section" style="display:none">
+        <label for="duration">Duration (minutes)</label>
+        <input id="duration" type="number" min="1" step="1" value="20" />
       </div>
 
       <button type="submit">Add Workout</button>
@@ -47,14 +47,14 @@
 
   <nav class="navbar">
     <a href="index.html">Home</a>
-    <a href="workouts.html">Workouts</a>
+    <a href="workouts.html" aria-current="page">Workouts</a>
     <a href="boss.html">Boss</a>
     <a href="friends.html">Friends</a>
     <a href="badges.html">Badges</a>
     <a href="help.html">Help</a>
   </nav>
 
-  <script src="js/api.js"></script>
-  <script src="js/workouts.js"></script>
+  <!-- IMPORTANT: use type="module" so imports work -->
+  <script type="module" src="js/workouts.js"></script>
 </body>
 </html>

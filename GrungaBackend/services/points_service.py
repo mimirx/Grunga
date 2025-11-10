@@ -1,101 +1,66 @@
-from datetime import datetime
-from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
+import pytz
+from collections import defaultdict
+from services.connection import db_cursor as dbCursor
 
-from .connection import fetchOne, execute
-from .connection import Db
+def nowCt():
+    tz = pytz.timezone("America/Chicago")
+    return datetime.now(tz)
 
-# Points rule (we can imorove/evolve it later)
-def calcWorkoutPoints(workoutType: str, sets: int, reps: int) -> int:
-    try:
-        sets = int(sets)
-        reps = int(reps)
-    except ValueError:
-        return 0
-    if sets <= 0 or reps <= 0:
-        return 0
-    return sets * reps
+def weekStartCt(dt):
+    s = dt - timedelta(days=dt.weekday())
+    return s.replace(hour=0, minute=0, second=0, microsecond=0)
 
+def pointsForRow(sets, reps, workoutType):
+    return int(sets) * int(reps)
 
-def writePoints(userId: int, points: int, reason: str, refId: Optional[str] = None) -> Dict[str, Any]:
-    with Db() as db:
-        # 1) ledger insert
-        db.execute(
-            "INSERT INTO pointsLedger (userId, points, reason, refId) VALUES (%s, %s, %s, %s)",
-            (userId, points, reason, refId)
-        )
-        last_id = db.lastRowId()
+def recomputeTotalsForUser(userId: int) -> dict:
+    now = nowCt()
+    ws = weekStartCt(now)
+    we = ws + timedelta(days=7)
+    today = now.date()
+    with dbCursor() as db:
+        db.execute("""
+            SELECT sets, reps, workoutType, workoutDate
+            FROM workouts
+            WHERE userId=%s
+        """, (userId,))
+        rows = db.fetchAll() or []
+    total = 0
+    weekly = 0
+    daily = 0
+    for r in rows:
+        pts = pointsForRow(r["sets"], r["reps"], r["workoutType"])
+        total += pts
+        d = r["workoutDate"]
+        if isinstance(d, datetime):
+            d = d.date()
+        if ws.date() <= d < we.date():
+            weekly += pts
+        if d == today:
+            daily += pts
+    return {"total": int(total), "weekly": int(weekly), "daily": int(daily), "streak": 0}
 
-        # 2) ensure totals row
-        db.execute(
-            """
-            INSERT INTO pointsTotals (userId)
-            SELECT %s FROM DUAL
-            WHERE NOT EXISTS (SELECT 1 FROM pointsTotals WHERE userId = %s)
-            """,
-            (userId, userId)
-        )
-
-        # 3) recompute cached totals (see Fix #2 below for Chicago time correctness)
-        db.execute(
-            """
-            UPDATE pointsTotals t
-            JOIN (
-              SELECT
-                userId,
-                COALESCE(SUM(points), 0) AS totalPoints,
-                COALESCE(SUM(CASE WHEN DATE(occurredAt) = CURRENT_DATE() THEN points END), 0) AS dailyPoints,
-                COALESCE(SUM(
-                  CASE WHEN YEARWEEK(occurredAt, 1) = YEARWEEK(CURRENT_DATE(), 1) THEN points END
-                ), 0) AS weeklyPoints
-              FROM pointsLedger
-              WHERE userId = %s
-              GROUP BY userId
-            ) s ON s.userId = t.userId
-            SET t.totalPoints  = s.totalPoints,
-                t.dailyPoints  = s.dailyPoints,
-                t.weeklyPoints = s.weeklyPoints,
-                t.updatedAt    = NOW()
-            """,
-            (userId,)
-        )
-
-        return {"lastRowId": last_id, "rowCount": 1}
-
-
-# Read the cached totals (compute if missing)
-def getTotals(userId: int) -> Dict[str, int]:
-    row = fetchOne(
-        "SELECT dailyPoints, weeklyPoints, totalPoints FROM pointsTotals WHERE userId = %s",
-        (userId,)
-    )
-    if row:
-        return row  # {'dailyPoints': ..., 'weeklyPoints': ..., 'totalPoints': ...}
-
-    # No cached row yet
-    totals = fetchOne(
-        """
-        SELECT
-          COALESCE(SUM(points), 0) AS totalPoints,
-          COALESCE(SUM(CASE WHEN DATE(occurredAt) = CURRENT_DATE() THEN points END), 0) AS dailyPoints,
-          COALESCE(SUM(
-            CASE WHEN YEARWEEK(occurredAt, 1) = YEARWEEK(CURRENT_DATE(), 1) THEN points END
-          ), 0) AS weeklyPoints
-        FROM pointsLedger
-        WHERE userId = %s
-        """,
-        (userId,)
-    ) or {"totalPoints": 0, "dailyPoints": 0, "weeklyPoints": 0}
-
-    execute(
-        """
-        INSERT INTO pointsTotals (userId, dailyPoints, weeklyPoints, totalPoints)
-        VALUES (%s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-          dailyPoints = VALUES(dailyPoints),
-          weeklyPoints = VALUES(weeklyPoints),
-          totalPoints = VALUES(totalPoints),
-          updatedAt = NOW()
-        """,
-        (userId, totals["dailyPoints"], totals["weeklyPoints"], totals["totalPoints"])
-    )
-    return totals
+def weeklyHistogramForUser(userId: int) -> list:
+    now = nowCt()
+    ws = weekStartCt(now)
+    we = ws + timedelta(days=7)
+    with dbCursor() as db:
+        db.execute("""
+            SELECT sets, reps, workoutType, workoutDate
+            FROM workouts
+            WHERE userId=%s AND workoutDate >= %s AND workoutDate < %s
+        """, (userId, ws.date(), we.date()))
+        rows = db.fetchAll() or []
+    byDay = defaultdict(int)
+    for r in rows:
+        d = r["workoutDate"]
+        if isinstance(d, datetime):
+            d = d.date()
+        pts = pointsForRow(r["sets"], r["reps"], r["workoutType"])
+        byDay[d] += pts
+    bins = []
+    for i in range(7):
+        day = (ws + timedelta(days=i)).date()
+        bins.append(int(byDay.get(day, 0)))
+    return bins
