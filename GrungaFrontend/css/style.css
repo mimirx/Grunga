@@ -399,3 +399,126 @@ form button:hover {
 #workout-list tr:hover td {
   box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
 }
+/* ===== Badge Gallery Styling ===== */
+/* --- Badges Gallery Section Styling --- */
+.badge-gallery {
+    margin: 3rem auto;
+    padding: 1rem 0;
+    max-width: 1000px; /* Increased max width to allow more space */
+    /* Removed border-bottom for cleaner section separation */
+}
+
+.badge-gallery h2 {
+    color: var(--accent-light);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-size: 2rem; /* Larger heading */
+    text-shadow: 0 0 12px var(--accent-glow);
+}
+
+.badge-gallery p {
+    text-align: center;
+    margin-bottom: 3.5rem; /* Increased gap before badges start */
+    color: var(--muted);
+    font-style: italic;
+    font-size: 1rem;
+}
+
+/* --- Gallery Grid Layout --- */
+.badges-container {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 55px; /* HUGE GAP: Widened spacing to separate badges significantly */
+    padding: 20px 0;
+}
+
+/* --- Individual Badge Card (NO BOX/SQUARE) --- */
+.badge {
+    text-align: center;
+    width: 150px; /* **Increased size, but kept proportional** */
+    padding: 0; /* **Removed padding to eliminate the visible box background** */
+    background: none; /* **Crucial: Remove the background color** */
+    border-radius: none; 
+    box-shadow: none; /* **Removed card shadow** */
+    transition: all var(--transition);
+}
+
+.badge:hover {
+    transform: translateY(-8px); /* Nice lift on hover */
+    background: none; 
+    box-shadow: none;
+}
+
+.badge img {
+    width: 150px; /* **Badge Image is now 150px (LARGE)** */
+    height: 150px;
+    margin: 0 auto;
+    object-fit: cover;
+    border-radius: 50%; /* Keeps the image perfectly circular */
+    transition: all var(--transition);
+}
+
+.badge p {
+    margin-top: 1rem;
+    font-size: 1.1rem; /* Larger title for better readability */
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+/* --- Visual States (High Contrast & Gamified) --- */
+
+/* Unlocked Badge */
+.badge.unlocked img {
+    border: 5px solid var(--accent); /* Thick, strong border */
+    filter: none;
+    opacity: 1;
+    /* Focus the visual impact on the glow */
+    box-shadow: 0 0 25px var(--accent-glow); 
+}
+
+/* Locked Badge */
+.badge.locked {
+    opacity: 0.9; 
+}
+
+.badge.locked img {
+    border: 5px solid var(--muted); 
+    filter: grayscale(90%); 
+    opacity: 0.4; 
+    box-shadow: none;
+}
+
+.badge.locked p {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+/* --- Media Query for Mobile --- */
+@media (max-width: 768px) {
+    .badges-container {
+        gap: 30px;
+    }
+    .badge {
+        width: 130px; 
+    }
+    .badge img {
+        width: 130px;
+        height: 130px;
+    }
+    .badge p {
+        font-size: 1rem;
+    }
+}
+/* just that upper text element */
+.gallery-intro {
+    text-align: center;
+    color: var(--muted);
+    font-size: 1.1rem;
+    margin-bottom: 3rem; 
+    padding-top: 1rem;
+    font-style: italic;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
