@@ -298,22 +298,6 @@ form button:hover {
 }
 
 .boss-caption {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-top: -8px;
-}
-
-.chart-section {
-  margin-top: 20px;
-  background: var(--panel);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  animation: fadeIn 1.2s ease;
-  border: 1px solid var(--accent, #00d38a); 
 }
 
 .chart-section h2 {
@@ -322,7 +306,7 @@ form button:hover {
   margin-bottom: 10px;
   text-transform: uppercase; 
 }
-
+ 
 #boss-art {
   transition: transform var(--transition), filter var(--transition), border-color var(--transition);
 }
@@ -371,7 +355,47 @@ form button:hover {
   transform: scale(1.005);
   transition: all 0.2s ease;
 }
+/* Consolidated boss and hover styles (merged from both sides) */
+#boss-art {
+  width: 190px;
+  margin: 24px auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0, 255, 174, 0.25);
+  border: 3px solid #00a86e;
+  transition: transform var(--transition), filter var(--transition), border-color var(--transition), box-shadow 0.3s ease;
+}
+
+#boss-art:hover {
+  transform: scale(1.05) rotate(-1deg);
+  filter: drop-shadow(0 0 20px var(--accent-glow));
+  border-color: var(--accent-light);
+  box-shadow: 0 0 40px rgba(0, 255, 174, 0.45);
+}
+
+.boss-section {
+  text-align: center;
+  margin-top: 2rem;
+  color: #f3f4f6;
+}
+
+.boss-title {
+  font-size: 1.8rem;
+  color: var(--accent, #00ffae);
+  text-shadow: 0 0 10px rgba(0, 255, 174, 0.5);
+  margin-bottom: 1rem;
+}
+
+.boss-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background: radial-gradient(circle at center, rgba(0, 255, 174, 0.03), transparent 70%);
+  border-radius: 20px;
+  padding: 1rem;
+}
 
 #workout-list tr:hover td {
-  box-shadow: none; 
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
 }

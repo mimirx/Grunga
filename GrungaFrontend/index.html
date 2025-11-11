@@ -16,23 +16,22 @@
     </div>
     <div class="streak">Streak: <strong id="streak-count">0</strong></div>
   </header>
-
   <main class="main-home">
     <section class="boss-section">
-      <h2>Current Weekly Boss</h2>
+      <h2 class="boss-title">🏆 Current Weekly Boss</h2>
 
       <div id="boss-health">
         <label>Boss HP:</label>
         <progress id="hp-bar" value="80" max="100"></progress>
       </div>
 
-      <div class="boss-wrapper">
-        <img src="assets/imagess/week-boss.png" alt="Weekly Boss" id="boss-art" />
+      <div class="boss-container">
+        <img src="assets/images/week-boss.png" alt="Weekly Boss" id="boss-art" />
       </div>
-    </section>
 
-    <section class="chart-section">
-      <canvas id="weeklyChart" width="600" height="200"></canvas>
+      <section class="chart-section">
+        <canvas id="weeklyChart" width="600" height="200"></canvas>
+      </section>
     </section>
   </main>
 
