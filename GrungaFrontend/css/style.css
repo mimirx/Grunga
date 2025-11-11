@@ -271,7 +271,7 @@ form button:hover {
   margin-bottom: 10px;
 }
 
-/* Subtle Boss Glow */
+
 #boss-art {
   transition: transform var(--transition), filter var(--transition);
 }
@@ -279,7 +279,7 @@ form button:hover {
   filter: drop-shadow(0 0 12px var(--accent-glow));
 }
 
-/* Header Fade Animation */
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -322,8 +322,46 @@ form button:hover {
   transition: all 0.2s ease;
 }
 
-/* Soft glow effect on hover */
+
 #workout-list tr:hover td {
   box-shadow: 0 0 10px rgba(0, 255, 170, 0.15);
 }
 
+
+.boss-section {
+  text-align: center;
+  margin-top: 2rem;
+  color: #f3f4f6;
+}
+
+.boss-title {
+  font-size: 1.8rem;
+  color: var(--accent, #00ffae);
+  text-shadow: 0 0 10px rgba(0, 255, 174, 0.5);
+  margin-bottom: 1rem;
+}
+
+.boss-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+#boss-art {
+  width: 180px; /* adjust size */
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0, 255, 174, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#boss-art:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(0, 255, 174, 0.6);
+}
+.boss-container {
+  background: radial-gradient(circle at center, rgba(0, 255, 174, 0.05), transparent 70%);
+  border-radius: 20px;
+  padding: 1rem;
+}
