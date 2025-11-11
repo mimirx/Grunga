@@ -3,6 +3,9 @@ import pytz
 from collections import defaultdict
 from services.connection import db_cursor as dbCursor
 
+BOSS_MAX_HP = 1000          # total HP each week
+DAMAGE_PER_POINT = 1        # 1 weekly point = 1 damage
+
 def nowCt():
     tz = pytz.timezone("America/Chicago")
     return datetime.now(tz)
@@ -39,7 +42,16 @@ def recomputeTotalsForUser(userId: int) -> dict:
             weekly += pts
         if d == today:
             daily += pts
-    return {"total": int(total), "weekly": int(weekly), "daily": int(daily), "streak": 0}
+    # boss HP derived from weekly points
+    boss = bossFromWeekly(weekly)
+    return {"total": total, "weekly": weekly, "daily": daily, "streak": 0, "boss": boss}
+
+def bossFromWeekly(weekly_points: int) -> dict:
+    max_hp = int(BOSS_MAX_HP)
+    dmg = weekly_points * DAMAGE_PER_POINT
+    hp = max(0, max_hp - dmg)
+    progress = 1 - (hp / max_hp) if max_hp > 0 else 0
+    return {"maxHp": max_hp, "hp": hp, "progress": round(progress, 4)}
 
 def weeklyHistogramForUser(userId: int) -> list:
     now = nowCt()

@@ -83,10 +83,12 @@ def deleteWorkout(userId, workoutId):
 def getPoints(userId):
     totals = recomputeTotalsForUser(userId)
     hist = weeklyHistogramForUser(userId)
+    boss = totals.get("boss", {})
     return jsonify({
         "totalPoints": totals["total"],
         "weeklyPoints": totals["weekly"],
         "dailyPoints": totals["daily"],
         "streak": totals.get("streak", 0),
-        "hist": hist
+        "hist": hist,
+        "boss": boss
     })
