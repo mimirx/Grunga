@@ -1,56 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Challenges • Grunga</title>
+  <meta charset="UTF-8" />
+  <title>Grunga – Friend Challenges</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <main class="container">
-    <h1 class="page-title">Friends Challenges</h1>
+<body class="dark-theme">
+  <header class="top-bar">
+    <h1 class="page-title">Friend Challenges</h1>
+    <p class="page-subtitle">
+      Send weekly challenges to your friends and complete them together.
+    </p>
+  </header>
 
+  <main class="page-content">
+
+    <!-- Send challenge card -->
     <section class="card">
-      <h2>Create a Challenge</h2>
-      <div class="row gap">
-        <input id="friend-username" placeholder="Friend username (e.g., demo2)" />
-        <select id="challenge-type">
-          <option value="pushups">Pushups</option>
-          <option value="crunches">Crunches</option>
-          <option value="lunges">Lunges</option>
-          <option value="run">Run (minutes)</option>
-        </select>
-        <input id="challenge-target" type="number" placeholder="Target (e.g., 100)" />
-        <button id="btn-create" class="btn">Send Challenge</button>
+      <h2 class="card-title">Send a Challenge</h2>
+      <p class="card-caption">Right now this is wired for demo1 and demo2 users.</p>
+
+      <div class="challenge-form">
+        <label for="challenge-to" class="form-label">Send To</label>
+        <select id="challenge-to" class="form-input"></select>
+
+        <label for="challenge-target" class="form-label">Target Points</label>
+        <input
+          id="challenge-target"
+          class="form-input"
+          type="number"
+          min="10"
+          step="10"
+          value="100"
+        />
+
+        <button id="challenge-send-btn" class="primary-btn">
+          Send Challenge
+        </button>
+
+        <div id="challenge-send-message" class="form-message"></div>
       </div>
-      <p id="create-msg" class="muted"></p>
     </section>
 
+    <!-- Incoming -->
     <section class="card">
-      <h2>Incoming</h2>
-      <ul id="incoming-list" class="list"></ul>
+      <h2 class="card-title">Incoming Challenges</h2>
+      <div id="incoming-list" class="challenge-list">
+        <p class="muted">Loading…</p>
+      </div>
     </section>
 
+    <!-- Active -->
     <section class="card">
-      <h2>Active</h2>
-      <ul id="active-list" class="list"></ul>
+      <h2 class="card-title">Active Challenges</h2>
+      <div id="active-list" class="challenge-list">
+        <p class="muted">Loading…</p>
+      </div>
     </section>
 
+    <!-- Done -->
     <section class="card">
-      <h2>Completed</h2>
-      <ul id="done-list" class="list"></ul>
+      <h2 class="card-title">Completed Challenges</h2>
+      <div id="done-list" class="challenge-list">
+        <p class="muted">Loading…</p>
+      </div>
     </section>
   </main>
 
   <nav class="navbar">
-    <a href="index.html" class="active">Home</a>
-    <a href="workouts.html">Workouts</a>
-    <a href="challenges.html">Challenges</a>
-    <a href="friends.html">Friends</a>
-    <a href="badges.html">Badges</a>
-    <a href="help.html">Help</a>
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="workouts.html" class="nav-link">Workouts</a>
+    <a href="challenges.html" class="nav-link nav-link-active">Challenges</a>
+    <a href="friends.html" class="nav-link">Friends</a>
+    <a href="badges.html" class="nav-link">Badges</a>
+    <a href="help.html" class="nav-link">Help</a>
   </nav>
 
-  <script type="module" src="js/challenges.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/challenges.js"></script>
 </body>
 </html>

@@ -1,110 +1,229 @@
-import { apiGet, apiPost } from "./api.js";
+const username = 'demo1'; // current logged-in user (change to 'demo2' to test other side)
+const knownUsernames = ['demo1', 'demo2'];
 
-const me = "demo1"; // or await apiGet('/users/demo1') if you prefer
+let usersByName = {};
+let usersById = {};
+let currentUser = null;
 
-const el = (id) => document.getElementById(id);
-const incomingList = el("incoming-list");
-const activeList   = el("active-list");
-const doneList     = el("done-list");
+const toSelect = document.getElementById('challenge-to');
+const targetInput = document.getElementById('challenge-target');
+const sendBtn = document.getElementById('challenge-send-btn');
+const sendMessage = document.getElementById('challenge-send-message');
 
-el("btn-create").addEventListener("click", async () => {
-  const friend = el("friend-username").value.trim();
-  const kind   = el("challenge-type").value;
-  const target = Number(el("challenge-target").value);
-  const msg    = el("create-msg");
+const incomingListEl = document.getElementById('incoming-list');
+const activeListEl = document.getElementById('active-list');
+const doneListEl = document.getElementById('done-list');
 
-  if (!friend || !target || target <= 0) {
-    msg.textContent = "Please provide a friend and a positive target.";
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString();
+}
+
+function otherUserName(ch) {
+  if (!currentUser) return '';
+  const otherId = (ch.fromUserId === currentUser.userId) ? ch.toUserId : ch.fromUserId;
+  const other = usersById[otherId];
+  return other ? other.displayName || other.username : `User #${otherId}`;
+}
+
+async function loadUsers() {
+  for (const name of knownUsernames) {
+    try {
+      const u = await apiGet(`/users/${name}`);
+      usersByName[name] = u;
+      usersById[u.userId] = u;
+    } catch (err) {
+      console.error('Failed to load user', name, err);
+    }
+  }
+  currentUser = usersByName[username];
+}
+
+function populateToDropdown() {
+  toSelect.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '-- Select friend --';
+  toSelect.appendChild(placeholder);
+
+  for (const name of knownUsernames) {
+    const u = usersByName[name];
+    if (!u || u.username === username) continue;
+
+    const opt = document.createElement('option');
+    opt.value = u.userId;
+    opt.textContent = u.displayName || u.username;
+    toSelect.appendChild(opt);
+  }
+}
+
+function setListEmpty(listEl, message) {
+  listEl.innerHTML = '';
+  const p = document.createElement('p');
+  p.className = 'muted';
+  p.textContent = message;
+  listEl.appendChild(p);
+}
+
+function renderChallengeCard(challenge, box) {
+  const card = document.createElement('div');
+  card.className = 'challenge-card';
+
+  const title = document.createElement('div');
+  title.className = 'challenge-title';
+
+  const youAreSender = challenge.fromUserId === currentUser.userId;
+  const otherName = otherUserName(challenge);
+  const direction = youAreSender ? `You → ${otherName}` : `${otherName} → You`;
+
+  title.textContent = `${direction} • ${challenge.target} pts`;
+  card.appendChild(title);
+
+  const meta = document.createElement('div');
+  meta.className = 'challenge-meta';
+  meta.textContent = `Status: ${challenge.status} • Created: ${formatDate(challenge.createdAt)}`;
+  card.appendChild(meta);
+
+  const actions = document.createElement('div');
+  actions.className = 'challenge-actions';
+
+  // Incoming (PENDING, to current user)
+  if (box === 'incoming' && challenge.status === 'PENDING' && challenge.toUserId === currentUser.userId) {
+    const acceptBtn = document.createElement('button');
+    acceptBtn.className = 'secondary-btn';
+    acceptBtn.textContent = 'Accept';
+    acceptBtn.onclick = async () => {
+      await apiPost(`/challenges/${challenge.challengeId}/accept`, { userId: currentUser.userId });
+      await refreshAll();
+    };
+
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'danger-btn';
+    declineBtn.textContent = 'Decline';
+    declineBtn.onclick = async () => {
+      await apiPost(`/challenges/${challenge.challengeId}/decline`, { userId: currentUser.userId });
+      await refreshAll();
+    };
+
+    actions.appendChild(acceptBtn);
+    actions.appendChild(declineBtn);
+  }
+
+  // Active: either side can complete for now
+  if (box === 'active' && challenge.status === 'ACTIVE') {
+    const completeBtn = document.createElement('button');
+    completeBtn.className = 'primary-btn';
+    completeBtn.textContent = 'Mark Complete';
+    completeBtn.onclick = async () => {
+      await apiPost(`/challenges/${challenge.challengeId}/complete`, { userId: currentUser.userId });
+      await refreshAll();
+    };
+    actions.appendChild(completeBtn);
+  }
+
+  if (actions.children.length > 0) {
+    card.appendChild(actions);
+  }
+
+  return card;
+}
+
+async function loadIncoming() {
+  const data = await apiGet(`/users/${currentUser.userId}/challenges?box=incoming`);
+  incomingListEl.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    setListEmpty(incomingListEl, 'No incoming challenges right now.');
     return;
   }
-  try {
-    // TODO: replace with your real endpoint
-    // await apiPost(`/users/${me}/challenges`, { friend, kind, target });
-    console.log("create challenge →", { friend, kind, target });
-    msg.textContent = "Challenge sent!";
-    msg.classList.add("success");
-    await loadAll();
-  } catch (e) {
-    console.error(e);
-    msg.textContent = "Could not create challenge.";
-    msg.classList.remove("success");
+
+  data.forEach(ch => {
+    const card = renderChallengeCard(ch, 'incoming');
+    incomingListEl.appendChild(card);
+  });
+}
+
+async function loadActive() {
+  const data = await apiGet(`/users/${currentUser.userId}/challenges?box=active`);
+  activeListEl.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    setListEmpty(activeListEl, 'You have no active challenges.');
+    return;
   }
+
+  data.forEach(ch => {
+    const card = renderChallengeCard(ch, 'active');
+    activeListEl.appendChild(card);
+  });
+}
+
+async function loadDone() {
+  const data = await apiGet(`/users/${currentUser.userId}/challenges?box=done`);
+  doneListEl.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    setListEmpty(doneListEl, 'No completed challenges yet.');
+    return;
+  }
+
+  data.forEach(ch => {
+    const card = renderChallengeCard(ch, 'done');
+    doneListEl.appendChild(card);
+  });
+}
+
+async function refreshAll() {
+  await Promise.all([loadIncoming(), loadActive(), loadDone()]);
+}
+
+async function handleSendClick() {
+  sendMessage.textContent = '';
+  const toIdRaw = toSelect.value;
+  const targetRaw = targetInput.value;
+
+  if (!toIdRaw) {
+    sendMessage.textContent = 'Please pick who you want to challenge.';
+    return;
+  }
+  const toUserId = parseInt(toIdRaw, 10);
+  const target = parseInt(targetRaw, 10);
+
+  if (Number.isNaN(target) || target <= 0) {
+    sendMessage.textContent = 'Please enter a positive target.';
+    return;
+  }
+
+  try {
+    await apiPost(`/users/${currentUser.userId}/challenges`, {
+      toUserId,
+      kind: 'WORKOUT',
+      target
+    });
+    sendMessage.textContent = 'Challenge sent!';
+    await refreshAll();
+  } catch (err) {
+    console.error('Error sending challenge', err);
+    sendMessage.textContent = 'Failed to send challenge.';
+  }
+}
+
+async function init() {
+  try {
+    await loadUsers();
+    if (!currentUser) {
+      console.error('Current user not found; check username in challenges.js');
+      return;
+    }
+    populateToDropdown();
+    await refreshAll();
+  } catch (err) {
+    console.error('Failed to init challenges page', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  sendBtn.addEventListener('click', handleSendClick);
+  init();
 });
-
-async function loadAll() {
-  // TODO: swap console mocks for real calls
-  // const incoming = await apiGet(`/users/${me}/challenges?box=incoming`);
-  // const active   = await apiGet(`/users/${me}/challenges?box=active`);
-  // const done     = await apiGet(`/users/${me}/challenges?box=done`);
-
-  const incoming = [
-    { id: 101, from: "serhii", kind: "pushups", target: 100 },
-  ];
-  const active = [
-    { id: 201, with: "serhii", kind: "run", target: 60, progress: 25 },
-  ];
-  const done = [
-    { id: 301, with: "alex", kind: "crunches", target: 200, result: "won" },
-  ];
-
-  renderIncoming(incoming);
-  renderActive(active);
-  renderDone(done);
-}
-
-function li(html) {
-  const li = document.createElement("li");
-  li.className = "list-item";
-  li.innerHTML = html;
-  return li;
-}
-
-function renderIncoming(items) {
-  incomingList.innerHTML = "";
-  items.forEach(c => {
-    const item = li(`
-      <div><b>${c.from}</b> challenged you: <i>${c.kind}</i> — target <b>${c.target}</b></div>
-      <div class="row">
-        <button class="btn btn-sm" data-accept="${c.id}">Accept</button>
-        <button class="btn btn-sm btn-ghost" data-decline="${c.id}">Decline</button>
-      </div>
-    `);
-    item.querySelector("[data-accept]").onclick  = () => accept(c.id);
-    item.querySelector("[data-decline]").onclick = () => decline(c.id);
-    incomingList.appendChild(item);
-  });
-}
-
-function renderActive(items) {
-  activeList.innerHTML = "";
-  items.forEach(c => {
-    const pct = Math.min(100, Math.round((c.progress || 0) / c.target * 100));
-    const item = li(`
-      <div><b>${c.with}</b> — ${c.kind} ${c.progress || 0}/${c.target}</div>
-      <progress max="100" value="${pct}"></progress>
-      <div class="row">
-        <button class="btn btn-sm" data-nudge="${c.id}">Nudge</button>
-        <button class="btn btn-sm btn-ghost" data-forfeit="${c.id}">Forfeit</button>
-      </div>
-    `);
-    item.querySelector("[data-nudge]").onclick   = () => nudge(c.id);
-    item.querySelector("[data-forfeit]").onclick = () => forfeit(c.id);
-    activeList.appendChild(item);
-  });
-}
-
-function renderDone(items) {
-  doneList.innerHTML = "";
-  items.forEach(c => {
-    const item = li(`<div><b>${c.with}</b> — ${c.kind} (${c.result}) — target ${c.target}</div>`);
-    doneList.appendChild(item);
-  });
-}
-
-// TODO: wire to endpoints
-async function accept(id){ console.log("accept", id); await loadAll(); }
-async function decline(id){ console.log("decline", id); await loadAll(); }
-async function nudge(id){ console.log("nudge", id); }
-async function forfeit(id){ console.log("forfeit", id); await loadAll(); }
-
-window.addEventListener("DOMContentLoaded", loadAll);
