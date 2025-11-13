@@ -1,27 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Grunga — Challenges</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Challenges • Grunga</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header>
-    <h1>Weekly Challenges</h1>
-  </header>
+  <main class="container">
+    <h1 class="page-title">Friends Challenges</h1>
 
-  <main>
-    <img src="assets/images/bosses/week-boss.png" alt="Boss Image" id="boss-image" />
-    <div id="boss-health">
-      <label>Boss HP:</label>
-      <progress id="hp-bar" value="80" max="100"></progress>
-    </div>
-    <p id="battle-status">Defeat the boss by earning points!</p>
+    <section class="card">
+      <h2>Create a Challenge</h2>
+      <div class="row gap">
+        <input id="friend-username" placeholder="Friend username (e.g., demo2)" />
+        <select id="challenge-type">
+          <option value="pushups">Pushups</option>
+          <option value="crunches">Crunches</option>
+          <option value="lunges">Lunges</option>
+          <option value="run">Run (minutes)</option>
+        </select>
+        <input id="challenge-target" type="number" placeholder="Target (e.g., 100)" />
+        <button id="btn-create" class="btn">Send Challenge</button>
+      </div>
+      <p id="create-msg" class="muted"></p>
+    </section>
+
+    <section class="card">
+      <h2>Incoming</h2>
+      <ul id="incoming-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Active</h2>
+      <ul id="active-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Completed</h2>
+      <ul id="done-list" class="list"></ul>
+    </section>
   </main>
 
   <nav class="navbar">
-    <a href="index.html">Home</a>
+    <a href="index.html" class="active">Home</a>
     <a href="workouts.html">Workouts</a>
     <a href="challenges.html">Challenges</a>
     <a href="friends.html">Friends</a>
