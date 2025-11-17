@@ -1,7 +1,7 @@
 # GrungaBackend/routes/__init__.py
 from .users import bpUsers
 from .workouts import bpWorkouts
-from .friends import bpFriends
+from .friends_old import bpFriends
 from .badges import bpBadges
 from .challenges import bpChallenges
 from .streaks import bpStreaks

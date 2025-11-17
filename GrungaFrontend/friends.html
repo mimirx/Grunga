@@ -6,27 +6,41 @@
   <title>Grunga — Friends</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
   <header>
-    <h1>Friends & Challenges</h1>
+    <h1>Friends</h1>
   </header>
 
-  <main>
+  <main class="friends-page">
     <section id="add-friend">
       <h2>Add a Friend</h2>
-      <input type="text" id="friend-username" placeholder="Enter username" />
-      <button id="send-request">Send Request</button>
-      <p id="friend-message"></p>
+
+      <div class="add-friend-wrapper">
+        <input
+          type="text"
+          id="friend-search"
+          placeholder="Search username…"
+          autocomplete="off"
+        />
+        <div id="friend-search-results"></div>
+        <p id="friend-message" class="status-text"></p>
+      </div>
     </section>
 
-    <section id="friend-list">
+    <section id="incoming-section">
+      <h2>Incoming Requests</h2>
+      <ul id="incoming-list" class="friend-list"></ul>
+    </section>
+
+    <section id="outgoing-section">
+      <h2>Outgoing Requests</h2>
+      <ul id="outgoing-list" class="friend-list"></ul>
+    </section>
+
+    <section id="friends-section">
       <h2>Your Friends</h2>
-      <ul id="friends"></ul>
-    </section>
-
-    <section id="challenges">
-      <h2>Daily Challenges</h2>
-      <ul id="challenge-list"></ul>
+      <ul id="friends-list" class="friend-list"></ul>
     </section>
   </main>
 
@@ -34,12 +48,11 @@
     <a href="index.html">Home</a>
     <a href="workouts.html">Workouts</a>
     <a href="challenges.html">Challenges</a>
-    <a href="friends.html">Friends</a>
+    <a href="friends.html" class="active">Friends</a>
     <a href="badges.html">Badges</a>
     <a href="help.html">Help</a>
   </nav>
 
-  <script src="js/api.js"></script>
-  <script src="js/friends.js"></script>
+  <script type="module" src="js/friends.js"></script>
 </body>
 </html>

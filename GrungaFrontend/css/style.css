@@ -522,3 +522,19 @@ form button:hover {
     margin-left: auto;
     margin-right: auto;
 }
+
+.friend-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.friend-row span {
+    font-size: 18px;
+}
+
+.friend-status {
+    opacity: 0.7;
+    margin-left: 10px;
+}

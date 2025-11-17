@@ -51,18 +51,18 @@ CREATE TABLE pointsLedger (
   INDEX idx_ledger_user_time (userId, occurredAt)
 ) ENGINE=InnoDB;
 
-CREATE TABLE friends (
+CREATE TABLE IF NOT EXISTS friends (
   id INT AUTO_INCREMENT PRIMARY KEY,
   userId INT NOT NULL,
-  friendUserId INT NOT NULL,
-  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  friendId INT NOT NULL,
+  status ENUM('pending', 'accepted', 'blocked') NOT NULL DEFAULT 'pending',
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_friends_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
-  CONSTRAINT fk_friends_friend FOREIGN KEY (friendUserId) REFERENCES users(userId) ON DELETE CASCADE,
-  CONSTRAINT chk_not_self CHECK (userId <> friendUserId),
-  pairA INT AS (LEAST(userId, friendUserId)) STORED,
-  pairB INT AS (GREATEST(userId, friendUserId)) STORED,
-  UNIQUE KEY uq_pair (pairA, pairB)
-) ENGINE=InnoDB;
+  CONSTRAINT fk_friends_friend FOREIGN KEY (friendId) REFERENCES users(userId) ON DELETE CASCADE,
+  CONSTRAINT uc_friend_pair UNIQUE (userId, friendId),
+  CONSTRAINT chk_not_self CHECK (userId <> friendId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE badges (
   badgeId INT AUTO_INCREMENT PRIMARY KEY,

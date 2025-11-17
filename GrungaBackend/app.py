@@ -3,10 +3,14 @@ from flask_cors import CORS
 import os
 
 from routes.workouts import bpWorkouts 
+from routes.friendsRoutes import friendsBlueprint
 
 def createApp():
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5500", "http://localhost:5500"]}})
+    CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5500", "http://localhost:5500"]}},
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "X-Demo-User"])
 
     @app.route("/api/health")
     def health():
@@ -14,6 +18,7 @@ def createApp():
 
     # ✅ register blueprint correctly
     app.register_blueprint(bpWorkouts, url_prefix="/api")
+    app.register_blueprint(friendsBlueprint, url_prefix="/api/friends")
 
     @app.errorhandler(Exception)
     def onError(e):
