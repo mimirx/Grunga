@@ -523,6 +523,7 @@ form button:hover {
     margin-right: auto;
 }
 
+/* for the friends page incoming request "pending" status*/
 .friend-row {
     display: flex;
     justify-content: space-between;
