@@ -72,12 +72,23 @@ def updateWorkout(userId, workoutId):
     totals = recomputeTotalsForUser(userId)
     return jsonify({"ok": True, "totals": totals})
 
-@bpWorkouts.delete("/users/<int:userId>/workouts/<int:workoutId>")
-def deleteWorkout(userId, workoutId):
+@bpWorkouts.route("/users/<int:userId>/workouts/delete", methods=["POST"])
+def deleteWorkout(userId):
+    data = request.get_json()
+    workoutId = data.get("workoutId")
+
+    if not workoutId:
+        return jsonify({"error": "Missing workoutId"}), 400
+
     with dbCursor(commit=True) as db:
-        db.execute("DELETE FROM workouts WHERE userId=%s AND workoutId=%s", (userId, workoutId))
+        db.execute(
+            "DELETE FROM workouts WHERE userId=%s AND workoutId=%s",
+            (userId, workoutId)
+        )
+
     totals = recomputeTotalsForUser(userId)
     return jsonify({"ok": True, "totals": totals})
+
 
 @bpWorkouts.get("/users/<int:userId>/points")
 def getPoints(userId):

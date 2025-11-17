@@ -14,15 +14,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderRows(rows) {
     list.innerHTML = "";
+
     (rows || []).forEach(r => {
-      const d = typeof r.workoutDate === "string" ? r.workoutDate : new Date(r.workoutDate).toISOString().slice(0,10);
+      const d = typeof r.workoutDate === "string"
+        ? r.workoutDate
+        : new Date(r.workoutDate).toISOString().slice(0,10);
+
       const isCardio = cardio.has(r.workoutType);
-      const txt = isCardio ? `${r.workoutType} — ${r.reps} min (${d})` : `${r.workoutType} — ${r.sets} x ${r.reps} (${d})`;
+      const txt = isCardio
+        ? `${r.workoutType} — ${r.reps} min (${d})`
+        : `${r.workoutType} — ${r.sets} x ${r.reps} (${d})`;
+
       const li = document.createElement("li");
-      li.textContent = txt;
+      li.classList.add("workout-item");
+
+      // TEXT SPAN
+      const span = document.createElement("span");
+      span.textContent = txt;
+
+      // DELETE BUTTON
+      const del = document.createElement("button");
+      del.classList.add("delete-btn");
+      del.innerHTML = "✖";
+
+      del.addEventListener("click", async () => {
+        if (!confirm("Delete this workout?")) return;
+
+        await apiPost(`/users/${userId}/workouts/delete`, {
+          workoutId: r.workoutId
+        });
+
+        await loadWorkouts();            // update workout list
+        await refreshTotalsIfPresent();  // update points
+      });
+
+      li.appendChild(span);
+      li.appendChild(del);
       list.appendChild(li);
     });
   }
+
 
   typeSelect.addEventListener("change", () => {
     const t = typeSelect.value;
