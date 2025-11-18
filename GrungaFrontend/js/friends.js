@@ -1,4 +1,4 @@
-import { apiGet, apiPost, getCurrentUser, setCurrentUser } from "./api.js";
+import { apiGet, apiPost, apiDelete, getCurrentUser, setCurrentUser } from "./api.js";
 
 const searchInput = document.getElementById("friend-search");
 const searchResults = document.getElementById("friend-search-results");
@@ -156,6 +156,24 @@ async function respondToRequest(otherUserId, action) {
   }
 }
 
+async function removeFriend(otherUserId) {
+  try {
+    const res = await apiDelete(`/friends/remove/${otherUserId}`);
+    console.log("removeFriend result:", res);
+
+    if (!res.ok) {
+      setMessage(res.error || "Could not remove friend.", true);
+    } else {
+      setMessage("Friend removed.");
+    }
+
+    await loadFriendsData();
+  } catch (err) {
+    console.error("removeFriend failed:", err);
+    setMessage("Could not remove friend.", true);
+  }
+}
+
 async function loadFriendsData() {
   try {
     console.log("Loading friends data…");
@@ -220,9 +238,18 @@ async function loadFriendsData() {
         ? `${f.displayName} (@${f.username})`
         : f.username;
 
+      // red X button to remove friend
+      const removeBtn = makeButton(
+        "✕",
+        () => removeFriend(f.userId),
+        "btn-deny"
+      );
+
       li.appendChild(span);
+      li.appendChild(removeBtn);
       return li;
     });
+
   } catch (err) {
     console.error("loadFriendsData failed:", err);
     setMessage("Could not load friends data.", true);

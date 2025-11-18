@@ -6,8 +6,8 @@ from services.friendsService import (
     respondToFriendRequest,
     getFriendsList,
     getPendingRequests,
+    removeFriend,
 )
-
 
 friendsBlueprint = Blueprint("friends", __name__)
 
@@ -77,5 +77,15 @@ def respondFriendRequestRoute():
 
     accept = (action == "accept")
     result = respondToFriendRequest(userId, int(otherUserId), accept)
+    status = 200 if result.get("ok") else 400
+    return jsonify(result), status
+
+@friendsBlueprint.route("/remove/<int:otherUserId>", methods=["DELETE"])
+def removeFriendRoute(otherUserId):
+    userId = getCurrentUserId()
+    if not userId:
+        return jsonify({"error": "User not found"}), 401
+
+    result = removeFriend(userId, otherUserId)
     status = 200 if result.get("ok") else 400
     return jsonify(result), status

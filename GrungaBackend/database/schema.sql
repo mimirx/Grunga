@@ -55,14 +55,16 @@ CREATE TABLE IF NOT EXISTS friends (
   id INT AUTO_INCREMENT PRIMARY KEY,
   userId INT NOT NULL,
   friendId INT NOT NULL,
+  initiatedBy INT DEFAULT NULL,
   status ENUM('pending', 'accepted', 'blocked') NOT NULL DEFAULT 'pending',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_friends_user FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
   CONSTRAINT fk_friends_friend FOREIGN KEY (friendId) REFERENCES users(userId) ON DELETE CASCADE,
+  CONSTRAINT fk_friends_initiatedBy FOREIGN KEY (initiatedBy) REFERENCES users(userId) ON DELETE CASCADE,
   CONSTRAINT uc_friend_pair UNIQUE (userId, friendId),
   CONSTRAINT chk_not_self CHECK (userId <> friendId)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE badges (
   badgeId INT AUTO_INCREMENT PRIMARY KEY,

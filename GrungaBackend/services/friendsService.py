@@ -30,7 +30,7 @@ def getFriendStatus(userId, otherUserId):
 
     with db_cursor() as db:
         db.execute("""
-            SELECT userId, friendId, status
+            SELECT userId, friendId, initiatedBy, status
             FROM friends
             WHERE userId = %s AND friendId = %s
         """, (low, high))
@@ -39,23 +39,21 @@ def getFriendStatus(userId, otherUserId):
     if not row:
         return None
 
-    if row["status"] == "blocked":
-        return "blocked"
-
     if row["status"] == "accepted":
         return "friends"
 
     if row["status"] == "pending":
-        if row["userId"] == userId:
+        if row["initiatedBy"] == userId:
             return "outgoing_pending"
-        else:
+        elif row["initiatedBy"] == otherUserId:
             return "incoming_pending"
 
+    # for 'blocked' or anything else, treat as no active relationship
     return None
 
 def sendFriendRequest(fromUserId, toUserId):
     if fromUserId == toUserId:
-        return {"ok": False, "error": "You cannot add yourself as a friend."}
+        return {"ok": False, "error": "You cannot add yourself."}
 
     low = min(fromUserId, toUserId)
     high = max(fromUserId, toUserId)
@@ -67,17 +65,19 @@ def sendFriendRequest(fromUserId, toUserId):
         return {"ok": False, "error": "Friend request already sent."}
     if status == "incoming_pending":
         return {"ok": False, "error": "This user already sent you a request."}
-    if status == "blocked":
-        return {"ok": False, "error": "Friendship is blocked."}
 
+    # status is None => allow new request, overwrite any old blocked/declined entry
     with db_cursor(commit=True) as db:
         db.execute("""
-            INSERT INTO friends (userId, friendId, status)
-            VALUES (%s, %s, 'pending')
-            ON DUPLICATE KEY UPDATE status = VALUES(status)
-        """, (low, high))
+            INSERT INTO friends (userId, friendId, initiatedBy, status)
+            VALUES (%s, %s, %s, 'pending')
+            ON DUPLICATE KEY UPDATE
+              initiatedBy = VALUES(initiatedBy),
+              status      = VALUES(status)
+        """, (low, high, fromUserId))
 
     return {"ok": True}
+
 
 def respondToFriendRequest(currentUserId, otherUserId, accept):
     if currentUserId == otherUserId:
@@ -149,9 +149,15 @@ def getFriendsList(userId):
 def getPendingRequests(userId):
     with db_cursor() as db:
         db.execute("""
-            SELECT f.id, f.userId, f.friendId, f.status,
-                   u1.username AS fromUsername, u1.displayName AS fromDisplayName,
-                   u2.username AS toUsername,   u2.displayName AS toDisplayName
+            SELECT f.id,
+                   f.userId,
+                   f.friendId,
+                   f.initiatedBy,
+                   f.status,
+                   u1.username  AS user1Username,
+                   u1.displayName AS user1DisplayName,
+                   u2.username  AS user2Username,
+                   u2.displayName AS user2DisplayName
             FROM friends f
             JOIN users u1 ON f.userId = u1.userId
             JOIN users u2 ON f.friendId = u2.userId
@@ -164,17 +170,37 @@ def getPendingRequests(userId):
     outgoing = []
 
     for row in rows:
+        # figure out who the "other user" is, for display
         if row["userId"] == userId:
-            outgoing.append({
-                "otherUserId": row["friendId"],
-                "username": row["toUsername"],
-                "displayName": row["toDisplayName"]
-            })
+            otherId = row["friendId"]
+            otherUsername = row["user2Username"]
+            otherDisplayName = row["user2DisplayName"]
         else:
-            incoming.append({
-                "otherUserId": row["userId"],
-                "username": row["fromUsername"],
-                "displayName": row["fromDisplayName"]
-            })
+            otherId = row["userId"]
+            otherUsername = row["user1Username"]
+            otherDisplayName = row["user1DisplayName"]
+
+        target_list = outgoing if row["initiatedBy"] == userId else incoming
+        target_list.append({
+            "otherUserId": otherId,
+            "username": otherUsername,
+            "displayName": otherDisplayName,
+        })
 
     return {"incoming": incoming, "outgoing": outgoing}
+
+
+def removeFriend(userId, otherUserId):
+    if userId == otherUserId:
+        return {"ok": False, "error": "Invalid request."}
+
+    low = min(userId, otherUserId)
+    high = max(userId, otherUserId)
+
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            DELETE FROM friends
+            WHERE userId = %s AND friendId = %s
+        """, (low, high))
+
+    return {"ok": True}
