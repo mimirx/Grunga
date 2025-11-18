@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "./api.js";
+import { apiGet, apiPost, getCurrentUser, setCurrentUser } from "./api.js";
 
 const searchInput = document.getElementById("friend-search");
 const searchResults = document.getElementById("friend-search-results");
@@ -27,6 +27,39 @@ function makeButton(label, handler, extraClass = "") {
   return btn;
 }
 
+// ---------- USER SWITCHER ----------
+function setupUserSwitcher() {
+  const btn1 = document.querySelector("[data-user='demo1']");
+  const btn2 = document.querySelector("[data-user='demo2']");
+  if (!btn1 || !btn2) return;
+
+  function updateActiveButtons() {
+    const u = getCurrentUser();
+    btn1.classList.toggle("active", u === "demo1");
+    btn2.classList.toggle("active", u === "demo2");
+  }
+
+  btn1.addEventListener("click", async () => {
+    setCurrentUser("demo1");
+    updateActiveButtons();
+    await loadFriendsData();
+  });
+
+  btn2.addEventListener("click", async () => {
+    setCurrentUser("demo2");
+    updateActiveButtons();
+    await loadFriendsData();
+  });
+
+  updateActiveButtons();
+}
+
+// react if another page changed the user
+window.addEventListener("user-changed", () => {
+  loadFriendsData();
+});
+// -----------------------------------
+
 async function handleSearchInput(e) {
   const q = e.target.value.trim();
   clearSearchResults();
@@ -37,9 +70,9 @@ async function handleSearchInput(e) {
 
   try {
     setMessage("Searching…");
-    console.log("Searching for", q);
-    const results = await apiGet(`/friends/users/search?q=${encodeURIComponent(q)}`);
-    console.log("Search results:", results);
+    const results = await apiGet(
+      `/friends/users/search?q=${encodeURIComponent(q)}`
+    );
 
     if (!results || results.length === 0) {
       setMessage("No users found.");
@@ -47,7 +80,7 @@ async function handleSearchInput(e) {
     }
 
     setMessage("");
-    results.forEach(user => {
+    results.forEach((user) => {
       const row = document.createElement("div");
       row.className = "friend-search-row";
 
@@ -56,7 +89,11 @@ async function handleSearchInput(e) {
         ? `${user.displayName} (@${user.username})`
         : user.username;
 
-      const addBtn = makeButton("Add", () => sendFriendRequest(user.userId), "btn-primary");
+      const addBtn = makeButton(
+        "Add",
+        () => sendFriendRequest(user.userId),
+        "btn-primary"
+      );
 
       row.appendChild(nameSpan);
       row.appendChild(addBtn);
@@ -72,9 +109,12 @@ async function sendFriendRequest(friendId) {
   try {
     const res = await apiPost("/friends/requests", { friendId });
     console.log("sendFriendRequest result:", res);
-    setMessage("Friend request sent!");
+    if (!res.ok) {
+      setMessage(res.error || "Could not send request.", true);
+    } else {
+      setMessage("Friend request sent!");
+    }
     clearSearchResults();
-    // refresh lists so “Outgoing Requests” updates
     await loadFriendsData();
   } catch (err) {
     console.error("sendFriendRequest failed:", err);
@@ -92,16 +132,23 @@ function renderList(listEl, items, buildRow) {
     listEl.appendChild(li);
     return;
   }
-  items.forEach(item => listEl.appendChild(buildRow(item)));
+  items.forEach((item) => listEl.appendChild(buildRow(item)));
 }
 
-async function respondToRequest(requestId, action) {
+async function respondToRequest(otherUserId, action) {
   try {
     const res = await apiPost("/friends/requests/respond", {
-      requestId,
-      action
+      otherUserId,
+      action, // "accept" or "decline"
     });
     console.log("respondToRequest result:", res);
+    if (!res.ok) {
+      setMessage(res.error || "Could not update request.", true);
+    } else {
+      setMessage(
+        action === "accept" ? "Friend request accepted." : "Request declined."
+      );
+    }
     await loadFriendsData();
   } catch (err) {
     console.error("respondToRequest failed:", err);
@@ -117,15 +164,26 @@ async function loadFriendsData() {
 
     const { incoming, outgoing, friends } = data;
 
-    renderList(incomingList, incoming, req => {
+    // incoming: [{ otherUserId, username, displayName }]
+    renderList(incomingList, incoming, (req) => {
       const li = document.createElement("li");
       li.className = "friend-row";
 
       const span = document.createElement("span");
-      span.textContent = req.fromDisplayName || req.fromUsername;
+      span.textContent = req.displayName
+        ? `${req.displayName} (@${req.username})`
+        : req.username;
 
-      const acceptBtn = makeButton("✓", () => respondToRequest(req.id, "accept"), "btn-accept");
-      const denyBtn = makeButton("✕", () => respondToRequest(req.id, "deny"), "btn-deny");
+      const acceptBtn = makeButton(
+        "✓",
+        () => respondToRequest(req.otherUserId, "accept"),
+        "btn-accept"
+      );
+      const denyBtn = makeButton(
+        "✕",
+        () => respondToRequest(req.otherUserId, "decline"),
+        "btn-deny"
+      );
 
       li.appendChild(span);
       li.appendChild(acceptBtn);
@@ -133,12 +191,10 @@ async function loadFriendsData() {
       return li;
     });
 
-    renderList(outgoingList, outgoing, req => {
+    // outgoing: [{ otherUserId, username, displayName }]
+    renderList(outgoingList, outgoing, (req) => {
       const li = document.createElement("li");
       li.className = "friend-row";
-
-      // Backend fields:
-      // req.displayName, req.username, req.otherUserId
 
       const span = document.createElement("span");
       span.textContent = req.displayName
@@ -154,7 +210,8 @@ async function loadFriendsData() {
       return li;
     });
 
-    renderList(friendsList, friends, f => {
+    // friends: [{ userId, username, displayName }]
+    renderList(friendsList, friends, (f) => {
       const li = document.createElement("li");
       li.className = "friend-row";
 
@@ -174,8 +231,11 @@ async function loadFriendsData() {
 
 window.addEventListener("DOMContentLoaded", () => {
   console.log("Friends page loaded");
+  setupUserSwitcher();
+
   if (searchInput) {
     searchInput.addEventListener("input", handleSearchInput);
   }
+
   loadFriendsData();
 });

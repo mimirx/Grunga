@@ -567,3 +567,35 @@ form button:hover {
   color: red;
   transform: scale(1.2);
 }
+
+/*switch between users*/
+#user-switcher {
+  margin: 10px 0 15px 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.user-btn {
+  padding: 6px 14px;
+  background: var(--panel-dark);
+  border: 2px solid var(--accent);
+  color: var(--accent-light);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.user-btn:hover {
+  background: var(--accent-light);
+  color: var(--bg);
+  transform: translateY(-2px);
+}
+
+.user-btn.active {
+  background: var(--accent);
+  color: var(--panel);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 10px var(--accent-glow);
+}

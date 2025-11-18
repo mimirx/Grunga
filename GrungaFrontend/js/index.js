@@ -1,4 +1,4 @@
-import { apiGet } from "./api.js";
+import { apiGet, getCurrentUser, setCurrentUser } from "./api.js";
 
 const greeting = document.getElementById("greeting");
 const totalPointsEl = document.getElementById("total-points");
@@ -12,7 +12,7 @@ const hpBar = document.getElementById("hp-bar");
 const canvas = document.getElementById("weeklyChart");
 const ctx = canvas && canvas.getContext ? canvas.getContext("2d") : null;
 
-function setGreeting(name) {
+function setGreetingText(name) {
   const h = new Date().getHours();
   let msg = "Welcome back";
   if (h < 12) msg = "Good morning";
@@ -41,6 +41,7 @@ function drawWeeklyChart(bins) {
   const barWidth = canvas.width / bins.length - 20;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   bins.forEach((val, i) => {
     const x = i * (barWidth + 20) + 30;
     const barHeight = (val / max) * (canvas.height - 40);
@@ -69,6 +70,7 @@ function updateBossHp(boss) {
   hpBar.value = pct;
   hpBar.max = 100;
   hpBar.title = `Boss HP: ${boss.hp}/${boss.maxHp}`;
+
   if (boss.hp <= 0) {
     hpBar.style.setProperty("--accent", "#ff4d88");
     const status = document.getElementById("battle-status");
@@ -78,10 +80,13 @@ function updateBossHp(boss) {
 
 async function loadHome() {
   try {
-    const u = await apiGet(`/users/demo1`);
+    const username = getCurrentUser();   // NEW
+    // 1) Load user
+    const u = await apiGet(`/users/${username}`);
+    // 2) Load points/stats
     const pts = await apiGet(`/users/${u.userId}/points`);
 
-    setGreeting(u.displayName || "Demo User");
+    setGreetingText(u.displayName || username);
 
     animateValue(totalPointsEl, 0, pts.totalPoints ?? 0, 1200);
     animateValue(weeklyPointsEl, 0, pts.weeklyPoints ?? 0, 1200);
@@ -95,6 +100,41 @@ async function loadHome() {
   }
 }
 
+
+// ========== USER SWITCHER UI ==========
+function setupUserSwitcher() {
+  const btn1 = document.querySelector("[data-user='demo1']");
+  const btn2 = document.querySelector("[data-user='demo2']");
+  if (!btn1 || !btn2) return;
+
+  function updateActiveButtons() {
+    const u = getCurrentUser();
+    btn1.classList.toggle("active", u === "demo1");
+    btn2.classList.toggle("active", u === "demo2");
+  }
+
+  btn1.addEventListener("click", () => {
+    setCurrentUser("demo1");
+    updateActiveButtons();
+    loadHome();  // refresh home data
+  });
+
+  btn2.addEventListener("click", () => {
+    setCurrentUser("demo2");
+    updateActiveButtons();
+    loadHome();
+  });
+
+  updateActiveButtons();
+}
+
+// Whenever user changes on another page, update automatically
+window.addEventListener("user-changed", () => {
+  loadHome();
+  setupUserSwitcher();
+});
+// =====================================
+
 if (bossArt) {
   bossArt.addEventListener("mouseenter", () => {
     bossArt.style.filter = "drop-shadow(0 0 20px var(--accent-glow))";
@@ -104,4 +144,7 @@ if (bossArt) {
   });
 }
 
-window.addEventListener("DOMContentLoaded", loadHome);
+window.addEventListener("DOMContentLoaded", () => {
+  setupUserSwitcher();
+  loadHome();
+});
