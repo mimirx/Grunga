@@ -159,7 +159,7 @@ async function respondToRequest(otherUserId, action) {
 async function loadFriendsData() {
   try {
     console.log("Loading friends data…");
-    const data = await apiGet("/friends");
+    const data = await apiGet("/friends/");
     console.log("Friends payload:", data);
 
     const { incoming, outgoing, friends } = data;
