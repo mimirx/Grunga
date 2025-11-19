@@ -5,6 +5,7 @@ import os
 from routes.workouts import bpWorkouts
 from routes.friendsRoutes import friendsBlueprint
 
+from routes.users import bpUsers
 
 def createApp():
     app = Flask(__name__)
@@ -33,6 +34,8 @@ def createApp():
     # Workouts endpoints live under /api/...
     app.register_blueprint(bpWorkouts, url_prefix="/api")
 
+    app.register_blueprint(bpUsers, url_prefix="/api/users")
+
     # Friends endpoints live under /api/friends/...
     app.register_blueprint(friendsBlueprint, url_prefix="/api/friends")
 
@@ -42,13 +45,14 @@ def createApp():
         # you can add logging here if you want
         return jsonify({"error": str(e)}), 500
 
-    # ===== Background scheduler (weekly jobs etc.) =====
+    # ===== Start scheduler =====
+# ===== Background scheduler =====
     try:
         from services.scheduler_service import startScheduler
-        startScheduler(tz="America/Chicago")
-    except Exception:
-        # if scheduler fails we don't want the whole app to crash
-        pass
+        startScheduler("America/Chicago")
+    except Exception as e:
+        print("Scheduler failed:", e)
+
 
     return app
 

@@ -1,39 +1,75 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+from services.points_service import recomputeTotalsForUser
+from services.connection import db_cursor
 from services.connection import execute
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
+# This will later hold the actual scheduler instance
 scheduler = None
 
 
 def resetDailyTasks():
-    """Example scheduled job that would reset daily points or streaks."""
-    print(f"[{datetime.now()}] Daily reset triggered.")
-    # TODO: implement streak reset or daily points clear here
-    # Example: execute("UPDATE streaks SET ...") once ready
+    tz = pytz.timezone("America/Chicago")
+    now = datetime.now(tz)
+    today = now.date()
+
+    print(f"[{now}] Running daily streak check for {today}")
+
+    # get all users
+    with db_cursor() as db:
+        db.execute("SELECT userId FROM users")
+        users = db.fetchAll() or []
+
+    for u in users:
+        uid = u["userId"]
+
+        # recompute totals to get daily points
+        totals = recomputeTotalsForUser(uid)
+        daily = totals["daily"]
+
+        # record daily points
+        from services.points_service import recordDailyPoints
+        recordDailyPoints(uid, daily, today)
+
+        # update streak
+        with db_cursor(commit=True) as db2:
+            db2.execute("SELECT streak FROM pointsTotals WHERE userId=%s", (uid,))
+            row = db2.fetchOne()
+            streak = row["streak"] if row else 0
+
+            if daily >= 100:
+                streak += 1
+            else:
+                streak = 0
+
+            db2.execute("UPDATE pointsTotals SET streak=%s WHERE userId=%s", (streak, uid))
+
+    print("Daily streak check complete.")
 
 
 def expireChallenges():
-    """Expire challenges that reached their end time (Chicago time)."""
+    """Expire challenges whose time is up."""
     res = execute("""
         UPDATE challenges
         SET status = 'EXPIRED'
         WHERE status = 'PENDING'
-          AND expiresAt <= NOW()      -- NOW() uses America/Chicago
+        AND expiresAt <= NOW()
     """)
     print(f"[{datetime.now()}] Expired {res.get('rowCount')} challenge(s)")
 
 
 def startScheduler(tz_str="America/Chicago"):
-    """Start the background scheduler if not already running."""
+    """Initialize and start the APScheduler instance."""
     global scheduler
+
     if scheduler and scheduler.running:
-        return scheduler  # Already running
+        return scheduler  # already running
 
     tz = pytz.timezone(tz_str)
     scheduler = BackgroundScheduler(timezone=tz)
 
-    # Run both jobs at midnight Chicago time
+    # Daily streak job
     scheduler.add_job(
         resetDailyTasks,
         trigger="cron",
@@ -42,6 +78,8 @@ def startScheduler(tz_str="America/Chicago"):
         id="daily_reset",
         replace_existing=True
     )
+
+    # Expire challenges job
     scheduler.add_job(
         expireChallenges,
         trigger="cron",
@@ -53,4 +91,5 @@ def startScheduler(tz_str="America/Chicago"):
 
     scheduler.start()
     print(f"✅ APScheduler started (timezone: {tz_str})")
+
     return scheduler

@@ -17,6 +17,14 @@ def weekStartCt(dt):
 def pointsForRow(sets, reps, workoutType):
     return int(sets) * int(reps)
 
+def getCurrentStreak(userId):
+    with dbCursor() as db:
+        db.execute("SELECT streak FROM pointsTotals WHERE userId=%s", (userId,))
+        row = db.fetchOne()
+        if not row:
+            return 0
+        return row["streak"]
+
 def recomputeTotalsForUser(userId: int) -> dict:
     now = nowCt()
     ws = weekStartCt(now)
@@ -44,7 +52,14 @@ def recomputeTotalsForUser(userId: int) -> dict:
             daily += pts
     # boss HP derived from weekly points
     boss = bossFromWeekly(weekly)
-    return {"total": total, "weekly": weekly, "daily": daily, "streak": 0, "boss": boss}
+    streak = getCurrentStreak(userId)
+    return {
+        "total": total,
+        "weekly": weekly,
+        "daily": daily,
+        "streak": streak,
+        "boss": boss
+    }
 
 def bossFromWeekly(weekly_points: int) -> dict:
     max_hp = int(BOSS_MAX_HP)
@@ -76,3 +91,11 @@ def weeklyHistogramForUser(userId: int) -> list:
         day = (ws + timedelta(days=i)).date()
         bins.append(int(byDay.get(day, 0)))
     return bins
+
+def recordDailyPoints(userId, points, day):
+    with dbCursor(commit=True) as db:
+        db.execute("""
+            INSERT INTO dailyPoints (userId, day, points)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE points = VALUES(points)
+        """, (userId, day, points))

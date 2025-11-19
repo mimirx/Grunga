@@ -222,13 +222,40 @@ def updateUser(userId: int):
 def getPoints(userId: int):
     """
     GET /api/users/<userId>/points
-    Returns {dailyPoints, weeklyPoints, totalPoints}.
+    Returns {dailyPoints, weeklyPoints, totalPoints, streak}.
     Falls back to computing from pointsLedger if pointsTotals is missing/empty.
     """
+    # 1) Get daily/weekly/total points the same way as before
     row = _get_totals_from_pointsTotals(userId)
     if not row:
         row = _get_totals_fallback_from_ledger(userId)
-    return jsonify(row or {"dailyPoints": 0, "weeklyPoints": 0, "totalPoints": 0})
+
+    # Ensure we have a dict with defaults
+    row = row or {"dailyPoints": 0, "weeklyPoints": 0, "totalPoints": 0}
+
+    # 2) Get streak from pointsTotals (default 0 if anything is missing)
+    streak = 0
+    try:
+        # Only try if the column exists (keeps old dev DBs safe)
+        if _table_has_column("pointsTotals", "streak"):
+            srow = fetchOne(
+                "SELECT streak FROM pointsTotals WHERE userId=%s",
+                (userId,),
+            )
+            if srow and srow.get("streak") is not None:
+                streak = int(srow["streak"])
+    except ProgrammingError:
+        # If the table/column is missing on some DB, just leave streak = 0
+        pass
+
+    # 3) Return combined result INCLUDING streak
+    return jsonify({
+        "dailyPoints": row.get("dailyPoints", 0),
+        "weeklyPoints": row.get("weeklyPoints", 0),
+        "totalPoints": row.get("totalPoints", 0),
+        "streak": streak,
+    })
+
 
 
 @bpUsers.get("/users/<int:userId>/totals")
