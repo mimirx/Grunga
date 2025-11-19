@@ -1,117 +1,133 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Grunga — Badges</title>
-  <link rel="stylesheet" href="css/style.css" />
-  </head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grunga — Badges</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 <body>
-  <header>
-    <h1>Your Badge Collection</h1>
-  </header>
 
-  <main>
-    <p class="gallery-intro">
-        Explore your epic collection of Grunga achievements and master your fitness journey.
-    </p>
-    
-    <section class="badge-gallery">
-      <h2>Boss Achievements</h2>
-      <p>The Badges you earn from defeating the weekly Boss.</p>
-      <div id="boss-badges" class="badges-container">
-        <div class="badge unlocked">
-          <img src="assets/images/GrogSlayer.png" alt="Grog Slayer Badge" />
-          <p>Grog Slayer</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/PyroConqueror.png" alt="Pyro Conqueror Badge" />
-          <p>Pyro Conqueror</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/NovaTimer.png" alt="Nova Tamer Badge" />
-          <p>Nova Tamer</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/GrungaPrime.png" alt="Grunga Prime Badge" />
-          <p>Grunga Prime</p>
-        </div>
-        <div class="badge locked">
-          <img src="assets/images/locked.png" alt="Locked Badge Placeholder" />
-          <p>Next Boss</p>
-        </div>
-      </div>
-    </section>
+<header>
+  <h1>Your Badge Collection</h1>
+</header>
 
-    <hr/>
+<main class="badge-page">
 
-    <section class="badge-gallery">
-      <h2>🔥 Streaks Crusher</h2>
-      <p>Badges you get for maintaining your weekly workout streak.</p>
-      <div id="streak-badges" class="badges-container">
-        <div class="badge unlocked">
-          <img src="assets/images/3week.png" alt="3-Week Streak Badge" />
-          <p>3-Week Crusher</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/5week.png" alt="5-Week Streak Badge" />
-          <p>5-Week Sentinel</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/7week.png" alt="7-Week Streak Badge" />
-          <p>7-Week Dedication</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/10week.png" alt="10-Week Streak Badge" />
-          <p>10-Week Master</p>
-        </div>
-        <div class="badge locked">
-          <img src="assets/images/locked.png" alt="Locked Badge Placeholder" />
-          <p>15-Week Legend</p>
-        </div>
-      </div>
-    </section>
+  <p class="gallery-intro">
+    Explore your epic collection of Grunga achievements and master your fitness journey.
+  </p>
 
-    <hr/>
+  <!-- =======================
+       BOSS BADGES
+  ======================== -->
+  <section class="badge-gallery">
+    <h2>Boss Achievements</h2>
+    <p>Badges earned from defeating the weekly Boss.</p>
 
-    <section class="badge-gallery">
-      <h2>🥇 Challenge Master</h2>
-      <p>Badges you get for completing Friend Challenges.</p>
-      <div id="challenge-badges" class="badges-container">
-        <div class="badge unlocked">
-          <img src="assets/images/1challenge.png" alt="1 Challenge Win Badge" />
-          <p>First Victory</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/3challenge.png" alt="3 Challenge Wins Badge" />
-          <p>Challenge Contender</p>
-        </div>
-        <div class="badge unlocked">
-          <img src="assets/images/5challenge.png" alt="5 Challenge Wins Badge" />
-          <p>Challenge Rookie</p>
-          </div>
-        <div class="badge unlocked">
-          <img src="assets/images/10challenge.png" alt="10 Challenge Wins Badge" />
-          <p>Challenge Veteran</p>
-        </div>
-        <div class="badge locked">
-          <img src="assets/images/locked.png" alt="Locked Badge Placeholder" />
-          <p>15 Challenges</p>
-        </div>
-      </div>
-    </section>
-  </main>
+    <div id="boss-badges" class="badges-container">
+      <div class="badge unlocked">
+        <img src="assets/images/GrogSlayer.png" alt="Grog Slayer Badge" />
+        <p>Grog Slayer</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/PyroConqueror.png" alt="Pyro Conqueror Badge" />
+        <p>Pyro Conqueror</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/NovaTimer.png" alt="Nova Tamer Badge" />
+        <p>Nova Tamer</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/GrungaPrime.png" alt="Grunga Prime Badge" />
+        <p>Grunga Prime</p>
+      </div>
+      <div class="badge locked">
+        <img src="assets/images/locked.png" alt="" />
+        <p>This Boss is Locked</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- =======================
+       STREAK BADGES
+  ======================== -->
+  <section class="badge-gallery">
+    <h2>🔥 Streaks Crusher</h2>
+    <p>Badges earned for maintaining your weekly workout streak.</p>
+
+    <div id="streak-badges" class="badges-container">
+      <div class="badge unlocked">
+        <img src="assets/images/3week.png" alt="3-Week Streak Badge" />
+        <p>3-Week Crusher</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/5week.png" alt="5-Week Streak Badge" />
+        <p>5-Week Sentinel</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/7week.png" alt="7-Week Streak Badge" />
+        <p>7-Week Dedication</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/10week.png" alt="10-Week Streak Badge" />
+        <p>10-Week Master</p>
+      </div>
+      <div class="badge locked">
+        <img src="assets/images/locked.png" alt="" />
+        <p>15 Weeks Locked</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- =======================
+       CHALLENGE BADGES
+  ======================== -->
+  <section class="badge-gallery">
+    <h2>🥇 Challenge Master</h2>
+    <p>Badges earned for completing Friend Challenges.</p>
+
+    <div id="challenge-badges" class="badges-container">
+      <div class="badge unlocked">
+        <img src="assets/images/1challenge.png" alt="1 Challenge Win Badge" />
+        <p>First Victory</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/3challenge.png" alt="3 Challenge Wins Badge" />
+        <p>Challenge Contender</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/5challenge.png" alt="5 Challenge Wins Badge" />
+        <p>Challenge Rookie</p>
+      </div>
+      <div class="badge unlocked">
+        <img src="assets/images/10challenge.png" alt="10 Challenge Wins Badge" />
+        <p>Challenge Veteran</p>
+      </div>
+      <div class="badge locked">
+        <img src="assets/images/locked.png" alt="" />
+        <p>15 Challenges Locked</p>
+      </div>
+    </div>
+  </section>
+
+</main>
 
 <nav class="navbar">
-  <a href="index.html">Home</a>
-  <a href="workouts.html">Workouts</a>
-  <a href="challenges.html">Challenges</a>
-  <a href="friends.html">Friends</a>
-  <a href="badges.html" class="active">Badges</a>
-  <a href="help.html">Help</a>
+  <a href="index.html">Home</a>
+  <a href="workouts.html">Workouts</a>
+  <a href="challenges.html">Challenges</a>
+  <a href="friends.html">Friends</a>
+  <a href="badges.html" class="active">Badges</a>
+  <a href="help.html">Help</a>
 </nav>
 
-  <script src="js/api.js"></script>
-  <script src="js/badges.js"></script>
+<script src="js/api.js"></script>
+<script src="js/badges.js"></script>
+
 </body>
 </html>
