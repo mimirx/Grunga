@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Grunga — Friends</title>
+  <link rel="stylesheet" href="css/friends.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -16,11 +17,9 @@
     </div>
   </header>
 
-
   <main class="friends-page">
     <section id="add-friend">
       <h2>Add a Friend</h2>
-
       <div class="add-friend-wrapper">
         <input
           type="text"
@@ -33,15 +32,17 @@
       </div>
     </section>
 
-    <section id="incoming-section">
-      <h2>Incoming Requests</h2>
-      <ul id="incoming-list" class="friend-list"></ul>
-    </section>
+    <div class="friend-columns">
+      <section id="incoming-section" class="friend-column">
+        <h2>Incoming Requests</h2>
+        <ul id="incoming-list" class="friend-list"></ul>
+      </section>
 
-    <section id="outgoing-section">
-      <h2>Outgoing Requests</h2>
-      <ul id="outgoing-list" class="friend-list"></ul>
-    </section>
+      <section id="outgoing-section" class="friend-column">
+        <h2>Outgoing Requests</h2>
+        <ul id="outgoing-list" class="friend-list"></ul>
+      </section>
+    </div>
 
     <section id="friends-section">
       <h2>Your Friends</h2>
