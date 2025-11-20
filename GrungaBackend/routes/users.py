@@ -296,3 +296,9 @@ def listFriends(userId: int):
         (userId, userId, userId),
     )
     return jsonify(rows)
+
+@bpUsers.get("/test-streak")
+def test_streak():
+    from services.scheduler_service import resetDailyTasks
+    resetDailyTasks()
+    return {"ok": True, "msg": "Streak test run complete"}
