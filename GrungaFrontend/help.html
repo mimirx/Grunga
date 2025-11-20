@@ -4,45 +4,183 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Grunga — Help</title>
+  <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/help.css" />
 </head>
 <body>
-  <header>
-    <h1>Help & Documentation</h1>
-  </header>
 
-  <main>
-    <section>
-      <h2>How to Log Workouts</h2>
-      <p>Go to the "Workouts" page, enter your exercise type, sets, and reps, then click “Add Workout.”</p>
-    </section>
+<header>
+  <h1>Help & Documentation</h1>
+  <p class="page-subtitle">Your guide to mastering points, challenges, and boss battles in Grunga.</p>
+</header>
 
-    <section>
-      <h2>How to Send a Challenge</h2>
-      <p>Visit the "Friends" page, select a friend, and click “Send Challenge.”</p>
-    </section>
+<main class="page-content">
 
-    <section>
-      <h2>Understanding Boss Battles</h2>
-      <p>Earn points throughout the week to defeat the weekly boss. Check progress on the “Boss” page.</p>
-    </section>
+  <!-- CORE SYSTEMS -->
+  <section class="card help-section">
+    <h2 class="card-title">🚀 Core Systems & Points</h2>
 
-    <section>
-      <h2>Badges and Streaks</h2>
-      <p>Complete weekly goals and maintain streaks to unlock new badges.</p>
-    </section>
-  </main>
+    <div class="faq-accordion">
+      <details class="faq-item">
+        <summary class="faq-question">1. Main Menu & Score Tracking</summary>
+        <div class="faq-answer">
+          <h3>The Dashboard at a Glance</h3>
+          <p>The main screen (Home) serves as your command center. It displays your personalized greeting and the following critical statistics:</p>
 
-  <nav class="navbar">
-    <a href="index.html">Home</a>
-    <a href="workouts.html">Workouts</a>
-    <a href="challenges.html">Challenges</a>
-    <a href="friends.html">Friends</a>
-    <a href="badges.html">Badges</a>
-    <a href="help.html">Help</a>
-  </nav>
+          <ul>
+            <li><strong>Total Lifetime Points:</strong> Your cumulative score since joining Grunga.</li>
+            <li><strong>Weekly Points:</strong> Your score for the current Monday-to-Sunday cycle, used for <strong>Boss Battles</strong>.</li>
+            <li><strong>Daily Points:</strong> Your score for the current day, used for <strong>Streak</strong> qualification.</li>
+            <li><strong>Streak Count:</strong> Your current consecutive days of meeting the daily workout milestone.</li>
+          </ul>
 
-  <script src="js/api.js"></script>
-  <script src="js/help.js"></script>
+          <p>The <strong>Weekly Progress chart</strong> provides a visual track of your effort leading up to the Boss Battle, and the current <strong>Weekly Boss's artwork</strong> is prominently featured.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">2. Weekly Points & The Reset Mechanic</summary>
+        <div class="faq-answer">
+          <h3>The Role of Weekly Points</h3>
+          <p>Points are earned primarily from <strong>logging workouts</strong> and secondarily from <strong>winning friend challenges</strong>. The weekly total acts as your contribution to defeating the weekly boss.</p>
+
+          <p>The <strong>Weekly Total resets every week</strong> at midnight (00:00) on Sunday night/Monday morning. This ensures you must stay consistent weekly and cannot carry points over.</p>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- WORKOUTS & STREAKS -->
+  <section class="card help-section">
+    <h2 class="card-title">💪 Workouts & Streaks</h2>
+
+    <div class="faq-accordion">
+      <details class="faq-item">
+        <summary class="faq-question">3. Logging a Workout for Points</summary>
+        <div class="faq-answer">
+          <h3>Data Input and Storage</h3>
+          <p>Use the <strong>"Workouts"</strong> page to accurately record your activity. Required fields include:</p>
+
+          <ul>
+            <li><strong>Exercise Type:</strong> e.g., Running, Squats, Push-ups.</li>
+            <li><strong>Duration/Reps:</strong> e.g., 30 minutes, 15 reps.</li>
+            <li><strong>Sets/Reps:</strong> for strength training.</li>
+          </ul>
+
+          <p>Clicking <strong>"Add Workout"</strong> calculates the points based on difficulty and updates your totals instantly.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">4. Streaks, Milestones, and Notifications</summary>
+        <div class="faq-answer">
+          <h3>The Streak Mechanic</h3>
+          <p>To earn a daily streak before <strong>00:00</strong>:</p>
+
+          <ol>
+            <li>You must log a workout.</li>
+          </ol>
+
+          <p>Failing to meet the milestone resets your streak to 0. You can earn badges for long streaks such as 5, 10, or 30 days.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- BOSS BATTLES -->
+  <section class="card help-section">
+    <h2 class="card-title">⚔️ Boss Battles & Badges</h2>
+
+    <div class="faq-accordion">
+      <details class="faq-item">
+        <summary class="faq-question">5. Boss Battles and Rewards</summary>
+        <div class="faq-answer">
+          <h3>Fighting the Boss</h3>
+          <p>The Boss Battle is your weekly fitness mission. You fight the boss by earning <strong>Weekly Points</strong>.</p>
+
+          <ul>
+            <li><strong>HP Reduction:</strong> Boss HP decreases as you earn points.</li>
+            <li><strong>Outcome:</strong> If you reach the weekly goal, you win and earn a badge. If not, you lose the week.</li>
+          </ul>
+
+          <p>The Boss resets every Monday at midnight.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">6. Badge Inventory and Unlock Details</summary>
+        <div class="faq-answer">
+          <h3>Viewing Your Trophies</h3>
+          <p>The <strong>"Badges"</strong> page displays all badges. Earned badges appear in color, while locked ones appear in grayscale.</p>
+
+  
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- FRIENDS & CHALLENGES -->
+  <section class="card help-section">
+    <h2 class="card-title">🤝 Friends & Challenges</h2>
+
+    <div class="faq-accordion">
+      <details class="faq-item">
+        <summary class="faq-question">7. Friends, Profiles, and Stats</summary>
+        <div class="faq-answer">
+          <h3>The Social Side of Fitness</h3>
+          <p>On the <strong>"Friends"</strong> page, you can search, send requests, and add friends. </p>
+
+          <ul>
+            <li>Workout gets more exciting together.</li>
+            <li>Challenge keep you motivatede.</li>
+            <li>Notifications will help you being consistent.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">8. Daily Friend Challenges</summary>
+        <div class="faq-answer">
+          <h3>Rules and Rewards</h3>
+          <ul>
+            <li>You can send only <strong>one challenge per day</strong>.</li>
+            <li>All challenges expire at <strong>00:00</strong> daily.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="card help-section contact-card">
+    <h2 class="card-title">📞 Contact Us</h2>
+    <div class="contact-details">
+      <p>If you cannot find the answer to your question above, please reach out:</p>
+      <ul>
+        <li><strong>Technical Support:</strong> <a href="tel:+17735252152">+1 (773) 525-2152</a></li>
+        <li><strong>Email:</strong> <a href="mailto:Grungahelp@gmail.com">Grungahelp@gmail.com</a></li>
+        <li><strong>Feedback/Bugs:</strong> Submit a report via Email.</li>
+      </ul>
+      <p class="card-caption">We want to make your experience better.</p>
+    </div>
+  </section>
+
+</main>
+
+<nav class="navbar">
+  <a href="index.html">Home</a>
+  <a href="workouts.html">Workouts</a>
+  <a href="challenges.html">Challenges</a>
+  <a href="friends.html">Friends</a>
+  <a href="badges.html">Badges</a>
+  <a href="help.html" class="nav-link-active">Help</a>
+</nav>
+
+<script src="js/api.js"></script>
+<script src="js/help.js"></script>
+
 </body>
 </html>
