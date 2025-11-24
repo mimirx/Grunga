@@ -1,13 +1,10 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from services.points_service import recomputeTotalsForUser
+from services.points_service import recomputeTotalsForUser, recordDailyPoints
 from services.connection import db_cursor
-from services.connection import execute
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
-# This will later hold the actual scheduler instance
 scheduler = None
-
 
 def resetDailyTasks():
     tz = pytz.timezone("America/Chicago")
@@ -28,8 +25,7 @@ def resetDailyTasks():
         totals = recomputeTotalsForUser(uid)
         daily = totals["daily"]
 
-        # record daily points
-        from services.points_service import recordDailyPoints
+        # store daily points
         recordDailyPoints(uid, daily, today)
 
         # update streak
@@ -47,29 +43,25 @@ def resetDailyTasks():
 
     print("Daily streak check complete.")
 
-
 def expireChallenges():
-    """Expire challenges whose time is up."""
-    res = execute("""
-        UPDATE challenges
-        SET status = 'EXPIRED'
-        WHERE status = 'PENDING'
-        AND expiresAt <= NOW()
-    """)
-    print(f"[{datetime.now()}] Expired {res.get('rowCount')} challenge(s)")
-
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            UPDATE challenges
+            SET status = 'EXPIRED'
+            WHERE status = 'PENDING'
+            AND dueAt <= NOW()
+        """)
+    print(f"[{datetime.now()}] Challenge expiration complete.")
 
 def startScheduler(tz_str="America/Chicago"):
-    """Initialize and start the APScheduler instance."""
     global scheduler
 
     if scheduler and scheduler.running:
-        return scheduler  # already running
+        return scheduler
 
     tz = pytz.timezone(tz_str)
     scheduler = BackgroundScheduler(timezone=tz)
 
-    # Daily streak job
     scheduler.add_job(
         resetDailyTasks,
         trigger="cron",
@@ -79,7 +71,6 @@ def startScheduler(tz_str="America/Chicago"):
         replace_existing=True
     )
 
-    # Expire challenges job
     scheduler.add_job(
         expireChallenges,
         trigger="cron",
@@ -90,6 +81,5 @@ def startScheduler(tz_str="America/Chicago"):
     )
 
     scheduler.start()
-    print(f"✅ APScheduler started (timezone: {tz_str})")
-
+    print(f"Scheduler started with timezone {tz_str}")
     return scheduler

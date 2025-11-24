@@ -3,8 +3,8 @@ import pytz
 from collections import defaultdict
 from services.connection import db_cursor as dbCursor
 
-BOSS_MAX_HP = 1000          # total HP each week
-DAMAGE_PER_POINT = 1        # 1 weekly point = 1 damage
+BOSS_MAX_HP = 1000
+DAMAGE_PER_POINT = 1
 
 def nowCt():
     tz = pytz.timezone("America/Chicago")
@@ -30,6 +30,7 @@ def recomputeTotalsForUser(userId: int) -> dict:
     ws = weekStartCt(now)
     we = ws + timedelta(days=7)
     today = now.date()
+
     with dbCursor() as db:
         db.execute("""
             SELECT sets, reps, workoutType, workoutDate
@@ -37,22 +38,27 @@ def recomputeTotalsForUser(userId: int) -> dict:
             WHERE userId=%s
         """, (userId,))
         rows = db.fetchAll() or []
+
     total = 0
     weekly = 0
     daily = 0
+
     for r in rows:
         pts = pointsForRow(r["sets"], r["reps"], r["workoutType"])
         total += pts
+
         d = r["workoutDate"]
         if isinstance(d, datetime):
             d = d.date()
+
         if ws.date() <= d < we.date():
             weekly += pts
         if d == today:
             daily += pts
-    # boss HP derived from weekly points
+
     boss = bossFromWeekly(weekly)
     streak = getCurrentStreak(userId)
+
     return {
         "total": total,
         "weekly": weekly,
@@ -72,6 +78,7 @@ def weeklyHistogramForUser(userId: int) -> list:
     now = nowCt()
     ws = weekStartCt(now)
     we = ws + timedelta(days=7)
+
     with dbCursor() as db:
         db.execute("""
             SELECT sets, reps, workoutType, workoutDate
@@ -79,6 +86,7 @@ def weeklyHistogramForUser(userId: int) -> list:
             WHERE userId=%s AND workoutDate >= %s AND workoutDate < %s
         """, (userId, ws.date(), we.date()))
         rows = db.fetchAll() or []
+
     byDay = defaultdict(int)
     for r in rows:
         d = r["workoutDate"]
@@ -86,10 +94,12 @@ def weeklyHistogramForUser(userId: int) -> list:
             d = d.date()
         pts = pointsForRow(r["sets"], r["reps"], r["workoutType"])
         byDay[d] += pts
+
     bins = []
     for i in range(7):
         day = (ws + timedelta(days=i)).date()
         bins.append(int(byDay.get(day, 0)))
+
     return bins
 
 def recordDailyPoints(userId, points, day):
