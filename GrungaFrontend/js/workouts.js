@@ -7,12 +7,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   const repsSection = document.getElementById("reps-section");
   const list = document.querySelector("#workout-list ul");
 
-  let userId = null; // actual numeric userId for current demo user
+  let userId = null;
 
   const cardio = new Set(["run", "bike", "walk", "swim"]);
   const strength = new Set(["pushups", "squats", "lunges", "crunches"]);
 
-  // ---------- UI: user switcher ----------
+  // ======================================================
+  // ⭐ FIXED DATE FORMATTER (supports legacy + new dates)
+  // ======================================================
+  function formatDate(dateString) {
+    if (!dateString) return "Unknown Date";
+
+    // Case 1: New backend DATE format "YYYY-MM-DD"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split("-");
+      const d = new Date(Number(year), Number(month) - 1, Number(day));
+
+      return d.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    // Case 2: Old GMT-style dates "Mon, 24 Nov 2025 00:00:00 GMT"
+    const legacyDate = new Date(dateString);
+    if (!isNaN(legacyDate.getTime())) {
+      return legacyDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    return "Unknown Date";
+  }
+
+  // --------------------------------------------------
+  // User switcher (demo1 / demo2)
+  // --------------------------------------------------
   function setupUserSwitcher() {
     const btn1 = document.querySelector("[data-user='demo1']");
     const btn2 = document.querySelector("[data-user='demo2']");
@@ -39,35 +74,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateActiveButtons();
   }
 
-  // When some other page changes the demo user, react here too
-  window.addEventListener("user-changed", () => {
-    // force reload everything based on new user
-    reloadAllForCurrentUser();
-  });
-  // ---------------------------------------
+  window.addEventListener("user-changed", () => reloadAllForCurrentUser());
 
+  // ======================================================
+  // ⭐ FIXED renderRows — now uses formatDate()
+  // ======================================================
   function renderRows(rows) {
     list.innerHTML = "";
 
     (rows || []).forEach((r) => {
-      const d =
-        typeof r.workoutDate === "string"
-          ? r.workoutDate
-          : new Date(r.workoutDate).toISOString().slice(0, 10);
+      const niceDate = formatDate(r.workoutDate);
 
       const isCardio = cardio.has(r.workoutType);
-      const txt = isCardio
-        ? `${r.workoutType} — ${r.reps} min (${d})`
-        : `${r.workoutType} — ${r.sets} x ${r.reps} (${d})`;
+      const text = isCardio
+        ? `${r.workoutType} — ${r.reps} min (${niceDate})`
+        : `${r.workoutType} — ${r.sets} x ${r.reps} (${niceDate})`;
 
       const li = document.createElement("li");
       li.classList.add("workout-item");
 
-      // TEXT
       const span = document.createElement("span");
-      span.textContent = txt;
+      span.textContent = text;
 
-      // DELETE BUTTON
       const del = document.createElement("button");
       del.classList.add("delete-btn");
       del.innerHTML = "✖";
@@ -80,8 +108,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           workoutId: r.workoutId,
         });
 
-        await loadWorkouts();            // update workout list
-        await refreshTotalsIfPresent();  // update points / boss / charts
+        await loadWorkouts();
+        await refreshTotalsIfPresent();
       });
 
       li.appendChild(span);
@@ -90,6 +118,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // --------------------------------------------------
+  // Workout type UI switching
+  // --------------------------------------------------
   typeSelect.addEventListener("change", () => {
     const t = typeSelect.value;
     if (cardio.has(t)) {
@@ -104,36 +135,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // --------------------------------------------------
+  // Load User
+  // --------------------------------------------------
   async function loadUser() {
-    const username = getCurrentUser(); // "demo1" or "demo2"
+    const username = getCurrentUser();
     const u = await apiGet(`/users/${username}`);
     userId = u.userId;
   }
 
+  // --------------------------------------------------
+  // Load workouts for user
+  // --------------------------------------------------
   async function loadWorkouts() {
     if (!userId) await loadUser();
     const rows = await apiGet(`/users/${userId}/workouts`);
     renderRows(rows);
   }
 
+  // --------------------------------------------------
+  // Refresh totals
+  // --------------------------------------------------
   async function refreshTotalsIfPresent() {
     const totalEl = document.getElementById("total-points");
     const weeklyEl = document.getElementById("weekly-points");
     const dailyEl = document.getElementById("daily-points");
     const streakEl = document.getElementById("streak-count");
+
     if (!totalEl && !weeklyEl && !dailyEl && !streakEl) return;
 
     if (!userId) await loadUser();
     const pts = await apiGet(`/users/${userId}/points`);
+
     if (totalEl) totalEl.textContent = pts.totalPoints ?? 0;
     if (weeklyEl) weeklyEl.textContent = pts.weeklyPoints ?? 0;
     if (dailyEl) dailyEl.textContent = pts.dailyPoints ?? 0;
     if (streakEl) streakEl.textContent = pts.streak ?? 0;
-    // (charts & boss on Home page are handled in index.js when points are re-fetched there)
   }
 
+  // --------------------------------------------------
+  // Create Workout
+  // --------------------------------------------------
   async function createWorkout(e) {
     e.preventDefault();
+
     const t = typeSelect.value;
     if (!t) {
       alert("Select a workout type.");
@@ -144,10 +189,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let reps = 0;
 
     if (cardio.has(t)) {
-      const duration = parseInt(
-        document.getElementById("duration").value,
-        10
-      );
+      const duration = parseInt(document.getElementById("duration").value, 10);
       if (!Number.isFinite(duration) || duration <= 0) {
         alert("Enter duration in minutes.");
         return;
@@ -156,6 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (strength.has(t)) {
       const s = parseInt(document.getElementById("sets").value, 10);
       const r = parseInt(document.getElementById("reps").value, 10);
+
       if (!Number.isFinite(s) || s <= 0) {
         alert("Enter sets.");
         return;
@@ -164,11 +207,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("Enter reps.");
         return;
       }
+
       sets = s;
       reps = r;
-    } else {
-      alert("Unsupported workout type.");
-      return;
     }
 
     if (!userId) await loadUser();
@@ -187,6 +228,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     repsSection.style.display = "none";
   }
 
+  // --------------------------------------------------
   async function reloadAllForCurrentUser() {
     userId = null;
     await loadUser();
@@ -194,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await refreshTotalsIfPresent();
   }
 
-  // Init
+  // Initialize
   setupUserSwitcher();
   await reloadAllForCurrentUser();
   form.addEventListener("submit", createWorkout);
