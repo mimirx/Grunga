@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 import sys
-
+from routes.challenges import challengesBlueprint
 from routes.workouts import bpWorkouts
 from routes.friendsRoutes import friendsBlueprint
 from routes.users import bpUsers
@@ -10,35 +10,22 @@ from routes.users import bpUsers
 
 def createApp():
     app = Flask(__name__)
-    CORS(
-        app,
-        resources={
-            r"/api/*": {
-                "origins": [
-                    "http://127.0.0.1:5500",
-                    "http://localhost:5500",
-                ],
-                "allow_headers": ["Content-Type", "X-Demo-User"],
-                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            }
-        },
-        supports_credentials=True,
-    )
+
+    # FIXED: Global CORS, supports credentials, no broken regex
+    CORS(app, supports_credentials=True)
 
     @app.route("/api/health")
     def health():
         return jsonify({"ok": True})
 
-    # ========= Blueprints =========
+    # Blueprints
     app.register_blueprint(bpWorkouts, url_prefix="/api")
     app.register_blueprint(bpUsers, url_prefix="/api/users")
     app.register_blueprint(friendsBlueprint, url_prefix="/api/friends")
-
-    @app.errorhandler(Exception)
-    def handle_exception(e):
-        return jsonify({"error": str(e)}), 500
+    app.register_blueprint(challengesBlueprint, url_prefix="/api/challenges")
 
     return app
+
 
 
 app = createApp()

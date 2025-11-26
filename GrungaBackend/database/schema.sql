@@ -9,23 +9,22 @@ CREATE TABLE users (
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS challenges (
-  challengeId   INT AUTO_INCREMENT PRIMARY KEY,
-  createdAt     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  fromUserId    INT NOT NULL,
-  toUserId      INT NOT NULL,
-  kind          VARCHAR(40) NOT NULL,        -- e.g. 'WORKOUT'
-  target        INT NOT NULL,                -- e.g. target points or reps
-  progressFrom  INT NOT NULL DEFAULT 0,      -- optional, for sender
-  progressTo    INT NOT NULL DEFAULT 0,      -- optional, for receiver
-  status        ENUM('PENDING','ACTIVE','DECLINED','DONE')
-                NOT NULL DEFAULT 'PENDING',
-  dueAt         DATETIME NULL,
-  CONSTRAINT fk_challenges_fromUser
-    FOREIGN KEY (fromUserId) REFERENCES users(userId),
-  CONSTRAINT fk_challenges_toUser
-    FOREIGN KEY (toUserId) REFERENCES users(userId)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS challenges;
+CREATE TABLE challenges (
+  challengeId INT AUTO_INCREMENT PRIMARY KEY,
+  fromUserId INT NOT NULL,
+  toUserId INT NOT NULL,
+  exerciseType VARCHAR(40) NOT NULL,
+  sets INT NOT NULL,
+  reps INT NOT NULL,
+  points INT NOT NULL,  -- auto calculated sets*reps
+  status ENUM('PENDING','ACTIVE','COMPLETED','EXPIRED','DECLINED')
+         NOT NULL DEFAULT 'PENDING',
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  dueAt DATETIME NOT NULL,
+  FOREIGN KEY (fromUserId) REFERENCES users(userId) ON DELETE CASCADE,
+  FOREIGN KEY (toUserId) REFERENCES users(userId) ON DELETE CASCADE
+);
 
 CREATE TABLE workouts (
   workoutId INT AUTO_INCREMENT PRIMARY KEY,

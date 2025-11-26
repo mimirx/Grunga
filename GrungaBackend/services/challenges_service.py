@@ -1,111 +1,173 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 from services.connection import db_cursor
+from services.points_service import recomputeTotalsForUser
+from services.connection import execute
+
+# -------------------------------------------------------------------
+# Helpers
+# -------------------------------------------------------------------
+
+def now_chicago():
+    """Return current datetime in America/Chicago timezone."""
+    tz = pytz.timezone("America/Chicago")
+    return datetime.now(tz)
 
 
-def row_to_dict(row):
-    if not row:
-        return None
-    return {
-        "challengeId": row["challengeId"],
-        "createdAt": row["createdAt"].isoformat() if isinstance(row["createdAt"], datetime) else row["createdAt"],
-        "fromUserId": row["fromUserId"],
-        "toUserId": row["toUserId"],
-        "kind": row["kind"],
-        "target": row["target"],
-        "progressFrom": row["progressFrom"],
-        "progressTo": row["progressTo"],
-        "status": row["status"],
-        "dueAt": row["dueAt"].isoformat() if row["dueAt"] else None,
-    }
-
-
-def create_challenge(from_user_id, to_user_id, kind, target, due_at=None):
-    sql = """
-        INSERT INTO challenges (fromUserId, toUserId, kind, target, dueAt)
-        VALUES (%s, %s, %s, %s, %s)
+def today_due_at():
     """
-    with db_cursor(commit=True) as cur:
-        cur.execute(sql, (from_user_id, to_user_id, kind, target, due_at))
-        challenge_id = cur.lastrowid
-
-        cur.execute("SELECT * FROM challenges WHERE challengeId = %s", (challenge_id,))
-        row = cur.fetchone()
-
-    return row_to_dict(row)
+    Returns today's expiration time: 23:59:59 Chicago time.
+    """
+    tz = pytz.timezone("America/Chicago")
+    now = datetime.now(tz)
+    due = now.replace(hour=23, minute=59, second=59, microsecond=0)
+    return due
 
 
-def list_challenges_for_user(user_id, box="incoming"):
-    if box == "incoming":
-        where = "toUserId = %s AND status IN ('PENDING','ACTIVE')"
-        params = (user_id,)
-    elif box == "active":
-        where = "(fromUserId = %s OR toUserId = %s) AND status = 'ACTIVE'"
-        params = (user_id, user_id)
-    elif box == "done":
-        where = "(fromUserId = %s OR toUserId = %s) AND status = 'DONE'"
-        params = (user_id, user_id)
-    else:
-        where = "(fromUserId = %s OR toUserId = %s)"
-        params = (user_id, user_id)
+def calculate_points(sets: int, reps: int) -> int:
+    """
+    Same formula used in workouts.
+    """
+    return int(sets) * int(reps)
 
-    sql = f"""
-        SELECT * FROM challenges
-        WHERE {where}
-        ORDER BY createdAt DESC
+
+# -------------------------------------------------------------------
+# CREATE CHALLENGE
+# -------------------------------------------------------------------
+
+def create_challenge(fromUserId, toUserId, exerciseType, sets, reps):
+    if fromUserId == toUserId:
+        return {"ok": False, "error": "You cannot challenge yourself."}
+
+    if sets <= 0 or reps <= 0:
+        return {"ok": False, "error": "Sets and reps must be positive numbers."}
+
+    pts = calculate_points(sets, reps)
+    dueAt = today_due_at()
+
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            INSERT INTO challenges (
+                fromUserId, toUserId, exerciseType, sets, reps, points, status, createdAt, dueAt
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, 'PENDING', NOW(), %s)
+        """, (fromUserId, toUserId, exerciseType, sets, reps, pts, dueAt))
+
+    return {"ok": True, "points": pts}
+
+
+# -------------------------------------------------------------------
+# GET CHALLENGES FOR USER
+# -------------------------------------------------------------------
+
+def get_challenges_for_user(userId, box):
+    """
+    box = 'incoming' | 'active' | 'done'
     """
 
-    with db_cursor() as cur:
-        cur.execute(sql, params)
-        rows = cur.fetchall()
+    with db_cursor() as db:
+        if box == "incoming":
+            db.execute("""
+                SELECT *
+                FROM challenges
+                WHERE toUserId = %s
+                  AND status = 'PENDING'
+                ORDER BY createdAt DESC
+            """, (userId,))
+        elif box == "active":
+            db.execute("""
+                SELECT *
+                FROM challenges
+                WHERE (fromUserId = %s OR toUserId = %s)
+                  AND status = 'ACTIVE'
+                ORDER BY createdAt DESC
+            """, (userId, userId))
+        elif box == "done":
+            db.execute("""
+                SELECT *
+                FROM challenges
+                WHERE (fromUserId = %s OR toUserId = %s)
+                  AND status = 'COMPLETED'
+                ORDER BY createdAt DESC
+            """, (userId, userId))
+        else:
+            return []
 
-    return [row_to_dict(r) for r in rows]
+        return db.fetchAll() or []
 
 
-def _load_challenge(challenge_id):
-    with db_cursor() as cur:
-        cur.execute("SELECT * FROM challenges WHERE challengeId = %s", (challenge_id,))
-        row = cur.fetchone()
-    return row
+# -------------------------------------------------------------------
+# ACCEPT / DECLINE
+# -------------------------------------------------------------------
 
+def accept_challenge(challengeId, userId):
+    with db_cursor() as db:
+        db.execute("SELECT toUserId, status FROM challenges WHERE challengeId=%s", (challengeId,))
+        row = db.fetchOne()
 
-def set_status(challenge_id, status):
-    with db_cursor(commit=True) as cur:
-        cur.execute(
-            "UPDATE challenges SET status = %s WHERE challengeId = %s",
-            (status, challenge_id),
-        )
-        cur.execute("SELECT * FROM challenges WHERE challengeId = %s", (challenge_id,))
-        row = cur.fetchone()
-    return row_to_dict(row)
-
-
-def accept_challenge(challenge_id, acting_user_id):
-    row = _load_challenge(challenge_id)
     if not row:
-        return None, "not-found"
-    if row["toUserId"] != acting_user_id:
-        return None, "forbidden"
+        return {"ok": False, "error": "Challenge not found."}
+
+    if row["toUserId"] != userId:
+        return {"ok": False, "error": "You cannot accept this challenge."}
+
     if row["status"] != "PENDING":
-        return None, "invalid-state"
-    return set_status(challenge_id, "ACTIVE"), None
+        return {"ok": False, "error": "Challenge is not pending."}
+
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            UPDATE challenges
+            SET status = 'ACTIVE'
+            WHERE challengeId = %s
+        """, (challengeId,))
+
+    return {"ok": True}
 
 
-def decline_challenge(challenge_id, acting_user_id):
-    row = _load_challenge(challenge_id)
+def decline_challenge(challengeId, userId):
+    with db_cursor() as db:
+        db.execute("SELECT toUserId, status FROM challenges WHERE challengeId=%s", (challengeId,))
+        row = db.fetchOne()
+
     if not row:
-        return None, "not-found"
-    if row["toUserId"] != acting_user_id:
-        return None, "forbidden"
+        return {"ok": False, "error": "Challenge not found."}
+
+    if row["toUserId"] != userId:
+        return {"ok": False, "error": "You cannot decline this challenge."}
+
     if row["status"] != "PENDING":
-        return None, "invalid-state"
-    return set_status(challenge_id, "DECLINED"), None
+        return {"ok": False, "error": "Challenge is not pending."}
+
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            UPDATE challenges
+            SET status = 'DECLINED'
+            WHERE challengeId=%s
+        """, (challengeId,))
+
+    return {"ok": True}
 
 
-def complete_challenge(challenge_id, acting_user_id):
-    row = _load_challenge(challenge_id)
+# -------------------------------------------------------------------
+# COMPLETE CHALLENGE
+# -------------------------------------------------------------------
+
+def complete_challenge(challengeId, userId):
+    """
+    Completer gets x2 points, sender gets x1.
+    """
+    with db_cursor() as db:
+        db.execute("""
+            SELECT fromUserId, toUserId, points, status
+            FROM challenges
+            WHERE challengeId=%s
+        """, (challengeId,))
+        row = db.fetchOne()
+
     if not row:
-        return None, "not-found"
-    if row["status"] not in ("ACTIVE", "PENDING"):
-        return None, "invalid-state"
-    # For now we allow either side to mark it done.
-    return set_status(challenge_id, "DONE"), None
+        return {"ok": False, "error": "Challenge not found."}
+
+    if row["status"] != "ACTIVE":
+        return {"ok": False, "error": "Challenge is not active."}
+
+    fromId = row["fromUserId"]()

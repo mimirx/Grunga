@@ -49,9 +49,9 @@ def expireChallenges():
             UPDATE challenges
             SET status = 'EXPIRED'
             WHERE status = 'PENDING'
-            AND dueAt <= NOW()
+              AND dueAt <= NOW()
         """)
-    print(f"[{datetime.now()}] Challenge expiration complete.")
+    print(f"[{datetime.now()}] Expired old challenges.")
 
 def startScheduler(tz_str="America/Chicago"):
     global scheduler

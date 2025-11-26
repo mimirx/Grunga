@@ -8,33 +8,56 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/challenges.css" />
 </head>
+
 <body class="dark-theme">
   <header class="top-bar">
     <h1 class="page-title">Friend Challenges</h1>
     <p class="page-subtitle">
-      Send weekly challenges to your friends and complete them together.
+      Send daily challenges to your friends and complete them for bonus points.
     </p>
   </header>
 
   <main class="page-content">
 
-    <!-- Send challenge card -->
+    <!-- SEND CHALLENGE -->
     <section class="card">
       <h2 class="card-title">Send a Challenge</h2>
-      <p class="card-caption">Right now this is wired for demo1 and demo2 users.</p>
+      <p class="card-caption">Choose a friend and an exercise challenge.</p>
 
       <div class="challenge-form">
+
+        <!-- Friend dropdown -->
         <label for="challenge-to" class="form-label">Send To</label>
         <select id="challenge-to" class="form-input"></select>
 
-        <label for="challenge-target" class="form-label">Target Points</label>
+        <!-- Exercise dropdown -->
+        <label for="exercise-type" class="form-label">Exercise</label>
+        <select id="exercise-type" class="form-input">
+          <option value="">-- Select exercise --</option>
+          <option value="pushups">Push-ups</option>
+          <option value="squats">Squats</option>
+          <option value="pullups">Pull-ups</option>
+          <option value="situps">Sit-ups</option>
+        </select>
+
+        <!-- Sets -->
+        <label for="challenge-sets" class="form-label">Sets</label>
         <input
-          id="challenge-target"
+          id="challenge-sets"
           class="form-input"
           type="number"
-          min="10"
-          step="10"
-          value="100"
+          min="1"
+          value="1"
+        />
+
+        <!-- Reps -->
+        <label for="challenge-reps" class="form-label">Reps</label>
+        <input
+          id="challenge-reps"
+          class="form-input"
+          type="number"
+          min="1"
+          value="5"
         />
 
         <button id="challenge-send-btn" class="primary-btn">
@@ -45,7 +68,9 @@
       </div>
     </section>
 
-    <!-- Incoming -->
+
+
+    <!-- Incoming Challenges -->
     <section class="card">
       <h2 class="card-title">Incoming Challenges</h2>
       <div id="incoming-list" class="challenge-list">
@@ -53,7 +78,7 @@
       </div>
     </section>
 
-    <!-- Active -->
+    <!-- Active Challenges -->
     <section class="card">
       <h2 class="card-title">Active Challenges</h2>
       <div id="active-list" class="challenge-list">
@@ -61,15 +86,17 @@
       </div>
     </section>
 
-    <!-- Done -->
+    <!-- Completed Challenges -->
     <section class="card">
       <h2 class="card-title">Completed Challenges</h2>
       <div id="done-list" class="challenge-list">
         <p class="muted">Loading…</p>
       </div>
     </section>
+
   </main>
 
+  <!-- NAVBAR -->
   <nav class="navbar">
     <a href="index.html" class="nav-link">Home</a>
     <a href="workouts.html" class="nav-link">Workouts</a>
@@ -79,7 +106,7 @@
     <a href="help.html" class="nav-link">Help</a>
   </nav>
 
-  <script src="js/api.js"></script>
-  <script src="js/challenges.js"></script>
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/challenges.js"></script>
 </body>
 </html>
