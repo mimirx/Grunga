@@ -170,4 +170,36 @@ def complete_challenge(challengeId, userId):
     if row["status"] != "ACTIVE":
         return {"ok": False, "error": "Challenge is not active."}
 
-    fromId = row["fromUserId"]()
+    fromId = row["fromUserId"]
+    toId = row["toUserId"]
+    pts = int(row["points"])
+
+    # Only receiver can complete
+    if userId != toId:
+        return {"ok": False, "error": "Only the receiver can complete this challenge."}
+
+    completer_points = pts * 2
+    sender_points = pts * 1
+
+    with db_cursor(commit=True) as db:
+        db.execute("""
+            INSERT INTO pointsLedger (userId, points, reason, refId)
+            VALUES (%s, %s, 'challenge_complete', %s)
+        """, (toId, completer_points, str(challengeId)))
+
+        db.execute("""
+            INSERT INTO pointsLedger (userId, points, reason, refId)
+            VALUES (%s, %s, 'challenge_reward_sender', %s)
+        """, (fromId, sender_points, str(challengeId)))
+
+        db.execute("""
+            UPDATE challenges
+            SET status = 'COMPLETED'
+            WHERE challengeId=%s
+        """, (challengeId,))
+
+    # Recompute totals so UI updates instantly
+    recomputeTotalsForUser(toId)
+    recomputeTotalsForUser(fromId)
+
+    return {"ok": True, "message": "Challenge completed."}
