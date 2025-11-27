@@ -1,47 +1,13 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from services.points_service import recomputeTotalsForUser, recordDailyPoints
 from services.connection import db_cursor
 from datetime import datetime
 import pytz
 
 scheduler = None
 
+# Daily job no longer does streak logic
 def resetDailyTasks():
-    tz = pytz.timezone("America/Chicago")
-    now = datetime.now(tz)
-    today = now.date()
-
-    print(f"[{now}] Running daily streak check for {today}")
-
-    # get all users
-    with db_cursor() as db:
-        db.execute("SELECT userId FROM users")
-        users = db.fetchAll() or []
-
-    for u in users:
-        uid = u["userId"]
-
-        # recompute totals to get daily points
-        totals = recomputeTotalsForUser(uid)
-        daily = totals["daily"]
-
-        # store daily points
-        recordDailyPoints(uid, daily, today)
-
-        # update streak
-        with db_cursor(commit=True) as db2:
-            db2.execute("SELECT streak FROM pointsTotals WHERE userId=%s", (uid,))
-            row = db2.fetchOne()
-            streak = row["streak"] if row else 0
-
-            if daily >= 100:
-                streak += 1
-            else:
-                streak = 0
-
-            db2.execute("UPDATE pointsTotals SET streak=%s WHERE userId=%s", (streak, uid))
-
-    print("Daily streak check complete.")
+    print(f"[{datetime.now()}] Daily maintenance run (no streak updates).")
 
 def expireChallenges():
     with db_cursor(commit=True) as db:
@@ -62,6 +28,7 @@ def startScheduler(tz_str="America/Chicago"):
     tz = pytz.timezone(tz_str)
     scheduler = BackgroundScheduler(timezone=tz)
 
+    # Daily job (no streak logic anymore)
     scheduler.add_job(
         resetDailyTasks,
         trigger="cron",
