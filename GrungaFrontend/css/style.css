@@ -600,3 +600,11 @@ form button:hover {
   border-color: var(--accent-glow);
   box-shadow: 0 0 10px var(--accent-glow);
 }
+progress#hp-bar::-webkit-progress-value {
+  background: var(--accent);
+}
+
+progress#hp-bar.boss-dead::-webkit-progress-value {
+  background: #ff4d88;
+}
+
