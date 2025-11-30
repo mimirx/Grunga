@@ -34,19 +34,25 @@ function animateValue(el, start, end, ms = 1000) {
   requestAnimationFrame(step);
 }
 
+
 function drawWeeklyChart(bins) {
   if (!ctx || !canvas) return; // guard
-  const labels = ["M","T","W","T","F","S","S"];
+  const labels = ["M","Tu","W","Th","F","Sa","Su"];
   const max = Math.max(...bins, 1) * 1.2;
   const barWidth = canvas.width / bins.length - 20;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Set the bottom margin area for text
+  const textMargin = 35; 
+  const chartHeight = canvas.height - textMargin; // Height available for bars
+
   bins.forEach((val, i) => {
     const x = i * (barWidth + 20) + 30;
-    const barHeight = (val / max) * (canvas.height - 40);
-    const y = canvas.height - barHeight - 30;
+    const barHeight = (val / max) * chartHeight;
+    const y = chartHeight - barHeight + 5; // +5 to give a small gap above the bars
 
+    // Gradient remains correct
     const g = ctx.createLinearGradient(x, y, x, y + barHeight);
     g.addColorStop(0, "#00d38a");
     g.addColorStop(1, "#00ffae");
@@ -56,23 +62,62 @@ function drawWeeklyChart(bins) {
     ctx.shadowBlur = 10;
     ctx.fillRect(x, y, barWidth, barHeight);
 
+    // Reset shadow for text
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "#f3f4f6";
     ctx.textAlign = "center";
-    ctx.font = "14px Segoe UI";
-    ctx.fillText(labels[i], x + barWidth / 2, canvas.height - 10);
+    
+    const centerX = x + barWidth / 2;
+
+
+    ctx.fillStyle = "#f3f4f6"; // White/Light Text Color
+    ctx.font = "14px Segoe UI"; 
+    const dayLabelY = canvas.height - 15;
+    ctx.fillText(labels[i], centerX, dayLabelY);
+
+    
+    ctx.font = "700 12px Segoe UI"; 
+    ctx.fillStyle = "#00ffae"; // Bright Accent Color
+    const pointValueY = dayLabelY + 15;
+    ctx.fillText(val, centerX, pointValueY); 
   });
 }
 
+/**
+ * Updates the boss's HP bar and status.
+ * Max HP is enforced as 500 for display purposes.
+ */
 function updateBossHp(boss) {
   if (!hpBar || !boss) return;
-  const pct = Math.round((1 - boss.hp / boss.maxHp) * 100);
+
+  const displayMaxHp = 500;
+  const currentHp = boss.hp;
+  
+  // 1. Calculate Percentage: (Current HP / Display Max HP) * 100
+  let pct = Math.round((currentHp / displayMaxHp) * 100);
+  
+  // Clamp between 0 and 100 just to be safe
+  pct = Math.max(0, Math.min(100, pct));
+
   hpBar.value = pct;
   hpBar.max = 100;
-  hpBar.title = `Boss HP: ${boss.hp}/${boss.maxHp}`;
+  // Use the actual current HP, but show the max as 500 in the title
+  hpBar.title = `Boss HP: ${currentHp}/${displayMaxHp}`; 
 
-  if (boss.hp <= 0) {
-    hpBar.style.setProperty("--accent", "#ff4d88");
+  // 2. Determine Color based on Percentage
+  let barColor = "#00d38a"; // Default Green (High HP)
+
+  if (pct <= 20) {
+    barColor = "#ef4444"; // Red (Critical)
+  } else if (pct <= 50) {
+    barColor = "#f59e0b"; // Orange (Mid)
+  }
+
+  // 3. Apply the color
+  hpBar.style.accentColor = barColor;
+  hpBar.style.setProperty("--accent", barColor);
+
+  // 4. Handle Boss Defeated
+  if (currentHp <= 0) {
     const status = document.getElementById("battle-status");
     if (status) status.textContent = "Boss defeated! 🎉";
   }
@@ -80,7 +125,7 @@ function updateBossHp(boss) {
 
 async function loadHome() {
   try {
-    const username = getCurrentUser();   // NEW
+    const username = getCurrentUser();    // NEW
     // 1) Load user
     const u = await apiGet(`/users/${username}`);
     // 2) Load points/stats
