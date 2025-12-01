@@ -7,14 +7,9 @@ BOSS_MAX_HP = 500
 DAMAGE_PER_POINT = 1
 
 
-TEST_YEAR = 2025
-TEST_MONTH = 11
-TEST_DAY = 17 # This date falls in Week 47 (Odd)
-
 def nowCt():
     tz = pytz.timezone("America/Chicago")
-    # TEMPORARY OVERRIDE FOR TESTING: Use fixed date instead of real time
-    return tz.localize(datetime(TEST_YEAR, TEST_MONTH, TEST_DAY, 12, 0, 0))
+    return datetime.now(tz)
 
 
 def weekStartCt(dt):
