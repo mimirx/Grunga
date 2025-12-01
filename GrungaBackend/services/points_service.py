@@ -3,18 +3,35 @@ import pytz
 from collections import defaultdict
 from services.connection import db_cursor as dbCursor
 
-BOSS_MAX_HP = 1000
+BOSS_MAX_HP = 500
 DAMAGE_PER_POINT = 1
 
 
+TEST_YEAR = 2025
+TEST_MONTH = 11
+TEST_DAY = 17 # This date falls in Week 47 (Odd)
+
 def nowCt():
     tz = pytz.timezone("America/Chicago")
-    return datetime.now(tz)
+    # TEMPORARY OVERRIDE FOR TESTING: Use fixed date instead of real time
+    return tz.localize(datetime(TEST_YEAR, TEST_MONTH, TEST_DAY, 12, 0, 0))
 
 
 def weekStartCt(dt):
     s = dt - timedelta(days=dt.weekday())
     return s.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def getBossAssetForWeek(dt: datetime) -> str:
+    """
+    Determines the boss image asset based on the current week.
+    """
+    week_number = dt.isocalendar()[1]
+    
+    if week_number % 2 == 0:
+        return "week-boss.png"
+    else:
+        return "week-boss2.png"
 
 
 def pointsForRow(sets, reps, workoutType):
@@ -74,7 +91,7 @@ def recomputeTotalsForUser(userId: int) -> dict:
             daily += pts
 
     # ================= BOSS =================
-    boss = bossFromWeekly(weekly)
+    boss = bossFromWeekly(weekly, now)
 
     # ================= STREAK LOGIC =================
     with dbCursor() as db:
@@ -96,9 +113,9 @@ def recomputeTotalsForUser(userId: int) -> dict:
     # Only update streak once per day
     if didAnythingToday and last_update != today:
         if last_update == yesterday:
-            streak = prev_streak + 1   # continue streak
+            streak = prev_streak + 1    # continue streak
         else:
-            streak = 1                 # start new streak
+            streak = 1                  # start new streak
 
     # ================= SAVE =================
     with dbCursor(commit=True) as db:
@@ -121,12 +138,20 @@ def recomputeTotalsForUser(userId: int) -> dict:
     }
 
 
-def bossFromWeekly(weekly_points: int) -> dict:
+def bossFromWeekly(weekly_points: int, now: datetime) -> dict:
+    asset = getBossAssetForWeek(now)
+
     max_hp = int(BOSS_MAX_HP)
     dmg = weekly_points * DAMAGE_PER_POINT
     hp = max(0, max_hp - dmg)
     progress = 1 - (hp / max_hp) if max_hp > 0 else 0
-    return {"maxHp": max_hp, "hp": hp, "progress": round(progress, 4)}
+    
+    return {
+        "maxHp": max_hp, 
+        "hp": hp, 
+        "progress": round(progress, 4),
+        "asset": asset
+    }
 
 
 def weeklyHistogramForUser(userId: int) -> list:
