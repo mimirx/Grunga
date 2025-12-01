@@ -2,36 +2,25 @@ from datetime import datetime, timedelta
 import pytz
 from collections import defaultdict
 from services.connection import db_cursor as dbCursor
+from services.badges_service import unlockBadge
 
 BOSS_MAX_HP = 500
 DAMAGE_PER_POINT = 1
-
 
 def nowCt():
     tz = pytz.timezone("America/Chicago")
     return datetime.now(tz)
 
-
 def weekStartCt(dt):
     s = dt - timedelta(days=dt.weekday())
     return s.replace(hour=0, minute=0, second=0, microsecond=0)
 
-
 def getBossAssetForWeek(dt: datetime) -> str:
-    """
-    Determines the boss image asset based on the current week.
-    """
     week_number = dt.isocalendar()[1]
-    
-    if week_number % 2 == 0:
-        return "week-boss.png"
-    else:
-        return "week-boss2.png"
-
+    return "week-boss.png" if week_number % 2 == 0 else "week-boss2.png"
 
 def pointsForRow(sets, reps, workoutType):
     return int(sets) * int(reps)
-
 
 def recomputeTotalsForUser(userId: int) -> dict:
     now = nowCt()
@@ -71,7 +60,7 @@ def recomputeTotalsForUser(userId: int) -> dict:
             SELECT points, occurredAt
             FROM pointsLedger
             WHERE userId=%s
-            AND reason IN ('challenge_complete', 'challenge_reward_sender')
+              AND reason IN ('challenge_complete','challenge_reward_sender')
         """, (userId,))
         challenge_rows = db.fetchAll() or []
 
@@ -85,8 +74,14 @@ def recomputeTotalsForUser(userId: int) -> dict:
         if ts == today:
             daily += pts
 
-    # ================= BOSS =================
+    # ================= BOSS CALC =================
     boss = bossFromWeekly(weekly, now)
+
+    # ================================================
+    # BADGE: BOSS SLAYER (BOSS_SLAYER)
+    # ================================================
+    if boss["hp"] == 0:
+        unlockBadge(userId, "BOSS_SLAYER")
 
     # ================= STREAK LOGIC =================
     with dbCursor() as db:
@@ -108,11 +103,17 @@ def recomputeTotalsForUser(userId: int) -> dict:
     # Only update streak once per day
     if didAnythingToday and last_update != today:
         if last_update == yesterday:
-            streak = prev_streak + 1    # continue streak
+            streak = prev_streak + 1
         else:
-            streak = 1                  # start new streak
+            streak = 1
 
-    # ================= SAVE =================
+    # ================================================
+    # BADGE: STREAK_7
+    # ================================================
+    if streak == 7:
+        unlockBadge(userId, "STREAK_7")
+
+    # ================= SAVE TOTALS =================
     with dbCursor(commit=True) as db:
         db.execute("""
             UPDATE pointsTotals
@@ -132,7 +133,6 @@ def recomputeTotalsForUser(userId: int) -> dict:
         "boss": boss
     }
 
-
 def bossFromWeekly(weekly_points: int, now: datetime) -> dict:
     asset = getBossAssetForWeek(now)
 
@@ -140,61 +140,55 @@ def bossFromWeekly(weekly_points: int, now: datetime) -> dict:
     dmg = weekly_points * DAMAGE_PER_POINT
     hp = max(0, max_hp - dmg)
     progress = 1 - (hp / max_hp) if max_hp > 0 else 0
-    
+
     return {
-        "maxHp": max_hp, 
-        "hp": hp, 
+        "maxHp": max_hp,
+        "hp": hp,
         "progress": round(progress, 4),
         "asset": asset
     }
-
 
 def weeklyHistogramForUser(userId: int) -> list:
     now = nowCt()
     ws = weekStartCt(now)
     we = ws + timedelta(days=7)
 
-    # --------- WORKOUT POINTS ---------
     with dbCursor() as db:
         db.execute("""
             SELECT sets, reps, workoutType, workoutDate
             FROM workouts
-            WHERE userId=%s AND workoutDate >= %s AND workoutDate < %s
+            WHERE userId=%s
+              AND workoutDate >= %s
+              AND workoutDate < %s
         """, (userId, ws.date(), we.date()))
         workout_rows = db.fetchAll() or []
 
+    from collections import defaultdict
     byDay = defaultdict(int)
 
     for r in workout_rows:
         d = r["workoutDate"]
         if isinstance(d, datetime):
             d = d.date()
-
         pts = pointsForRow(r["sets"], r["reps"], r["workoutType"])
         byDay[d] += pts
 
-    # --------- CHALLENGE POINTS ---------
     with dbCursor() as db:
         db.execute("""
             SELECT points, occurredAt
             FROM pointsLedger
-            WHERE userId=%s 
-              AND reason IN ('challenge_complete', 'challenge_reward_sender')
-              AND occurredAt >= %s AND occurredAt < %s
+            WHERE userId=%s
+              AND reason IN ('challenge_complete','challenge_reward_sender')
+              AND occurredAt >= %s
+              AND occurredAt < %s
         """, (userId, ws, we))
         challenge_rows = db.fetchAll() or []
 
     for c in challenge_rows:
-        ts = c["occurredAt"]
-        if isinstance(ts, datetime):
-            d = ts.date()
-        else:
-            d = ts
-
+        ts = c["occurredAt"].date()
         pts = int(c["points"])
-        byDay[d] += pts
+        byDay[ts] += pts
 
-    # --------- GENERATE 7-DAY BIN LIST ---------
     bins = []
     for i in range(7):
         day = (ws + timedelta(days=i)).date()

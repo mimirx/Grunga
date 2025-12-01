@@ -41,6 +41,7 @@ def listWorkouts(userId):
 def createWorkout(userId):
     import pytz
     from datetime import datetime
+    from services.badges_service import unlockBadge
 
     data = request.get_json(force=True) or {}
 
@@ -52,7 +53,7 @@ def createWorkout(userId):
     if not workoutType or sets <= 0 or reps <= 0 or not workoutDateStr:
         return jsonify({"error": "invalid input"}), 400
 
-    # Convert frontend ISO timestamp → Chicago → DATE
+    # Convert timestamp to Chicago date
     tz = pytz.timezone("America/Chicago")
     dt = datetime.fromisoformat(workoutDateStr.replace("Z", ""))
     dt = tz.localize(dt)
@@ -66,14 +67,20 @@ def createWorkout(userId):
         """, (userId, workoutType, sets, reps, workoutDate))
         wid = db.lastRowId()
 
-    # Recompute totals AFTER workout
+    # Recompute totals
     totals = recomputeTotalsForUser(userId)
     newDaily = totals["daily"]
     earnedPoints = sets * reps
     prevDaily = newDaily - earnedPoints
 
-    # =============== INSTANT STREAK LOGIC ==================
-    # Give streak +1 IF user crossed the 100-point threshold TODAY
+    # ============ FIRST WORKOUT BADGE ============
+    with dbCursor() as db:
+        db.execute("SELECT COUNT(*) AS c FROM workouts WHERE userId=%s", (userId,))
+        row = db.fetchOne()
+        if row and row["c"] == 1:
+            unlockBadge(userId, "FIRST_WORKOUT")
+
+    # ============ STREAK LOGIC ============
     if prevDaily < 100 and newDaily >= 100:
         with dbCursor(commit=True) as db:
             db.execute("""
@@ -81,7 +88,6 @@ def createWorkout(userId):
                 SET streak = streak + 1
                 WHERE userId=%s
             """, (userId,))
-    # =======================================================
 
     return jsonify({"ok": True, "workoutId": wid, "totals": totals}), 201
 
