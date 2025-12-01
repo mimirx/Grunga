@@ -6,6 +6,7 @@ from routes.challenges import challengesBlueprint
 from routes.workouts import bpWorkouts
 from routes.friendsRoutes import friendsBlueprint
 from routes.users import bpUsers
+from routes.badges import bpBadges
 
 
 def createApp():
@@ -23,6 +24,7 @@ def createApp():
     app.register_blueprint(bpUsers, url_prefix="/api/users")
     app.register_blueprint(friendsBlueprint, url_prefix="/api/friends")
     app.register_blueprint(challengesBlueprint, url_prefix="/api/challenges")
+    app.register_blueprint(bpBadges, url_prefix="/api/badges")
 
     return app
 

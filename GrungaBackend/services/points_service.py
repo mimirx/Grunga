@@ -77,10 +77,8 @@ def recomputeTotalsForUser(userId: int) -> dict:
     # ================= BOSS CALC =================
     boss = bossFromWeekly(weekly, now)
 
-    # ================================================
-    # BADGE: BOSS SLAYER (BOSS_SLAYER)
-    # ================================================
-    if boss["hp"] == 0:
+    # -------- Badge: Boss Slayer --------
+    if boss["hp"] <= 0:
         unlockBadge(userId, "BOSS_SLAYER")
 
     # ================= STREAK LOGIC =================
@@ -100,17 +98,15 @@ def recomputeTotalsForUser(userId: int) -> dict:
 
     streak = prev_streak
 
-    # Only update streak once per day
+    # Only update streak once per day, and only if we did something today
     if didAnythingToday and last_update != today:
         if last_update == yesterday:
             streak = prev_streak + 1
         else:
             streak = 1
 
-    # ================================================
-    # BADGE: STREAK_7
-    # ================================================
-    if streak == 7:
+    # -------- Badge: 7-day streak --------
+    if streak >= 7:
         unlockBadge(userId, "STREAK_7")
 
     # ================= SAVE TOTALS =================
@@ -132,6 +128,7 @@ def recomputeTotalsForUser(userId: int) -> dict:
         "streak": streak,
         "boss": boss
     }
+
 
 def bossFromWeekly(weekly_points: int, now: datetime) -> dict:
     asset = getBossAssetForWeek(now)

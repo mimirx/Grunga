@@ -608,3 +608,37 @@ progress#hp-bar.boss-dead::-webkit-progress-value {
   background: #ff4d88;
 }
 
+.badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.badge {
+    width: 120px;
+    text-align: center;
+}
+
+.badge img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+}
+
+/* UNLOCKED = full color + glow */
+.badge.unlocked img {
+    filter: none;
+    border: 3px solid #00ffcc;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffcc;
+}
+
+/* LOCKED = grayscale + faded */
+.badge.locked img {
+    filter: grayscale(100%) brightness(0.5);
+    opacity: 0.5;
+}
+
+.badge.locked p {
+    opacity: 0.6;
+}

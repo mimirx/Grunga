@@ -80,6 +80,7 @@ def createWorkout(userId):
         if row and row["c"] == 1:
             unlockBadge(userId, "FIRST_WORKOUT")
 
+
     # ============ STREAK LOGIC ============
     if prevDaily < 100 and newDaily >= 100:
         with dbCursor(commit=True) as db:
