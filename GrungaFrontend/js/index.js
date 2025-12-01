@@ -68,13 +68,13 @@ function drawWeeklyChart(bins) {
     
     const centerX = x + barWidth / 2;
 
-
+    // 1. Draw Day Label (M, T, W, etc.) - Positioned 15px from the canvas bottom
     ctx.fillStyle = "#f3f4f6"; // White/Light Text Color
     ctx.font = "14px Segoe UI"; 
     const dayLabelY = canvas.height - 15;
     ctx.fillText(labels[i], centerX, dayLabelY);
 
-    
+    // 2. Draw Daily Points Gained (Value) - Font set to BOLD and bright color
     ctx.font = "700 12px Segoe UI"; 
     ctx.fillStyle = "#00ffae"; // Bright Accent Color
     const pointValueY = dayLabelY + 15;
@@ -83,16 +83,22 @@ function drawWeeklyChart(bins) {
 }
 
 /**
- * Updates the boss's HP bar and status.
+ * Updates the boss's HP bar, status, and image (using boss.asset from API).
  * Max HP is enforced as 500 for display purposes.
  */
 function updateBossHp(boss) {
   if (!hpBar || !boss) return;
 
+  // 1. Update Boss Image (NEW)
+  if (bossArt && boss.asset) {
+    // Dynamically set the image source using the asset name from the backend
+    bossArt.src = `assets/images/${boss.asset}`;
+  }
+
   const displayMaxHp = 500;
   const currentHp = boss.hp;
   
-  // 1. Calculate Percentage: (Current HP / Display Max HP) * 100
+  // 2. Calculate Percentage: (Current HP / Display Max HP) * 100
   let pct = Math.round((currentHp / displayMaxHp) * 100);
   
   // Clamp between 0 and 100 just to be safe
@@ -103,7 +109,7 @@ function updateBossHp(boss) {
   // Use the actual current HP, but show the max as 500 in the title
   hpBar.title = `Boss HP: ${currentHp}/${displayMaxHp}`; 
 
-  // 2. Determine Color based on Percentage
+  // 3. Determine Color based on Percentage
   let barColor = "#00d38a"; // Default Green (High HP)
 
   if (pct <= 20) {
@@ -112,11 +118,11 @@ function updateBossHp(boss) {
     barColor = "#f59e0b"; // Orange (Mid)
   }
 
-  // 3. Apply the color
+  // 4. Apply the color
   hpBar.style.accentColor = barColor;
   hpBar.style.setProperty("--accent", barColor);
 
-  // 4. Handle Boss Defeated
+  // 5. Handle Boss Defeated
   if (currentHp <= 0) {
     const status = document.getElementById("battle-status");
     if (status) status.textContent = "Boss defeated! 🎉";
@@ -139,7 +145,7 @@ async function loadHome() {
     animateValue(streakEl, 0, pts.streak ?? 0, 1200);
 
     drawWeeklyChart(Array.isArray(pts.hist) ? pts.hist : [0,0,0,0,0,0,0]);
-    updateBossHp(pts.boss);
+    updateBossHp(pts.boss); // This handles both HP and image asset
   } catch (err) {
     console.error("loadHome failed:", err);
   }
