@@ -7,10 +7,16 @@ const dailyPointsEl = document.getElementById("daily-points");
 const streakEl = document.getElementById("streak-count");
 const bossArt = document.getElementById("boss-art");
 const hpBar = document.getElementById("hp-bar");
+// NEW: Reference to the parent container for applying defeat class
+const bossContainer = bossArt ? bossArt.closest('.boss-container') : null; 
+// NEW: Reference to the victory message element
+const victoryMessage = document.getElementById("victory-message"); 
 
 // SAFE canvas access
 const canvas = document.getElementById("weeklyChart");
 const ctx = canvas && canvas.getContext ? canvas.getContext("2d") : null;
+
+// ... (functions setGreetingText, animateValue, drawWeeklyChart remain unchanged) ...
 
 function setGreetingText(name) {
   const h = new Date().getHours();
@@ -84,32 +90,38 @@ function drawWeeklyChart(bins) {
 
 /**
  * Updates the boss's HP bar, status, and image (using boss.asset from API).
- * Max HP is enforced as 500 for display purposes.
+ * Also handles visual changes when the boss is defeated.
  */
 function updateBossHp(boss) {
   if (!hpBar || !boss) return;
 
-  // 1. Update Boss Image (NEW)
+  const currentHp = boss.hp;
+  const isDefeated = currentHp <= 0;
+
+  // 1. Update Boss Image (Dynamic Asset)
   if (bossArt && boss.asset) {
-    // Dynamically set the image source using the asset name from the backend
     bossArt.src = `assets/images/${boss.asset}`;
+  }
+  
+  // 2. Apply Defeat Visuals (NEW)
+  if (bossContainer) {
+      bossContainer.classList.toggle('boss-defeated', isDefeated);
+  }
+  if (victoryMessage) {
+      victoryMessage.classList.toggle('hidden', !isDefeated);
   }
 
   const displayMaxHp = 500;
-  const currentHp = boss.hp;
   
-  // 2. Calculate Percentage: (Current HP / Display Max HP) * 100
+  // 3. Calculate Percentage
   let pct = Math.round((currentHp / displayMaxHp) * 100);
-  
-  // Clamp between 0 and 100 just to be safe
   pct = Math.max(0, Math.min(100, pct));
 
   hpBar.value = pct;
   hpBar.max = 100;
-  // Use the actual current HP, but show the max as 500 in the title
   hpBar.title = `Boss HP: ${currentHp}/${displayMaxHp}`; 
 
-  // 3. Determine Color based on Percentage
+  // 4. Determine Color based on Percentage
   let barColor = "#00d38a"; // Default Green (High HP)
 
   if (pct <= 20) {
@@ -118,14 +130,19 @@ function updateBossHp(boss) {
     barColor = "#f59e0b"; // Orange (Mid)
   }
 
-  // 4. Apply the color
+  // 5. Apply the color
   hpBar.style.accentColor = barColor;
   hpBar.style.setProperty("--accent", barColor);
 
-  // 5. Handle Boss Defeated
-  if (currentHp <= 0) {
+  // 6. Handle Boss Defeated (Set status message)
+  if (isDefeated) {
     const status = document.getElementById("battle-status");
-    if (status) status.textContent = "Boss defeated! 🎉";
+    // status.textContent will now be controlled by the hidden class on victoryMessage
+    if (status) status.textContent = "DEFEATED!"; 
+  } else {
+    // Clear status if not defeated (or set a different status)
+    const status = document.getElementById("battle-status");
+    if (status) status.textContent = ""; 
   }
 }
 
@@ -184,7 +201,6 @@ window.addEventListener("user-changed", () => {
   loadHome();
   setupUserSwitcher();
 });
-// =====================================
 
 if (bossArt) {
   bossArt.addEventListener("mouseenter", () => {

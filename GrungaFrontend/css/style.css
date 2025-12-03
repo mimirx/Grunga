@@ -642,3 +642,135 @@ progress#hp-bar.boss-dead::-webkit-progress-value {
 .badge.locked p {
     opacity: 0.6;
 }
+
+
+.boss-container {
+    position: relative; 
+    min-height: 250px; 
+}
+
+
+
+#boss-health {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; 
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+#boss-health label {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+progress#hp-bar {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    height: 16px;
+    width: 60%;
+    max-width: 400px;
+    border: 2px solid var(--panel-dark);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--panel-dark);
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+    transition: all var(--transition);
+}
+
+
+progress#hp-bar::-webkit-progress-value {
+    background-color: var(--accent); 
+    transition: background-color 0.5s, width 0.5s;
+    border-radius: 6px;
+}
+
+
+progress#hp-bar::-moz-progress-bar {
+    background-color: var(--accent);
+    transition: background-color 0.5s, width 0.5s;
+}
+
+progress#hp-bar::-webkit-progress-bar {
+    background-color: var(--panel-dark);
+}
+
+
+
+#boss-status-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Allows clicks to pass through */
+    text-align: center;
+    background: rgba(15, 23, 42, 0.7); /* Subtle dark overlay */
+    z-index: 10;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s ease;
+}
+
+#battle-status {
+    font-size: 1.5rem;
+    color: var(--danger);
+    text-shadow: 0 0 10px var(--danger);
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+
+#victory-message {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent-glow); 
+    text-shadow: 0 0 25px var(--accent-glow);
+    animation: pulse 1.5s infinite; 
+    line-height: 1.2;
+}
+
+
+.boss-container.boss-defeated #boss-status-overlay {
+    opacity: 1; 
+}
+
+.boss-container.boss-defeated #boss-art {
+    opacity: 0.25; 
+    filter: grayscale(100%) brightness(50%) !important; 
+    border-color: var(--muted) !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+    transition: all 1s ease;
+}
+
+.boss-container.boss-defeated #boss-art:hover {
+    transform: none; 
+    filter: grayscale(100%) brightness(50%) !important;
+    border-color: var(--muted) !important;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.03); opacity: 0.95; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+.hidden {
+    display: none !important;
+}
+
+/* --- RESPONSIVENESS FOR DEFEAT MESSAGE --- */
+@media (max-width: 600px) {
+    #victory-message {
+        font-size: 1.8rem;
+    }
+    #battle-status {
+        font-size: 1.2rem;
+    }
+}
