@@ -7,7 +7,10 @@ from services.friendsService import (
     getFriendsList,
     getPendingRequests,
     removeFriend,
+    getFriendStatus,
 )
+from services.points_service import recomputeTotalsForUser, weeklyHistogramForUser
+from services.connection import db_cursor
 
 friendsBlueprint = Blueprint("friends", __name__)
 
@@ -89,3 +92,44 @@ def removeFriendRoute(otherUserId):
     result = removeFriend(userId, otherUserId)
     status = 200 if result.get("ok") else 400
     return jsonify(result), status
+
+# NEW: friend profile stats for a specific friend
+@friendsBlueprint.route("/profile/<int:friendId>", methods=["GET"])
+def friendProfileRoute(friendId):
+    """
+    Returns points, streak, total workouts, and weekly histogram
+    for the given friendId, as long as the current user is that
+    user or they are friends.
+    """
+    currentUserId = getCurrentUserId()
+    if not currentUserId:
+        return jsonify({"error": "User not found"}), 401
+
+    # Optional safety: only allow viewing your own stats or friends' stats
+    status = getFriendStatus(currentUserId, friendId)
+    if currentUserId != friendId and status != "friends":
+        return jsonify({"error": "You can only view stats for friends."}), 403
+
+    # Recompute totals for this friend (workouts + challenges, etc.)
+    totals = recomputeTotalsForUser(friendId)
+
+    # Count total workouts for this friend
+    with db_cursor() as db:
+        db.execute("SELECT COUNT(*) AS cnt FROM workouts WHERE userId=%s", (friendId,))
+        row = db.fetchOne() or {}
+    total_workouts = int(row.get("cnt", 0))
+
+    # Weekly histogram (7 days)
+    histogram = weeklyHistogramForUser(friendId)
+
+    return jsonify({
+        "points": {
+            "total": totals["total"],
+            "weekly": totals["weekly"],
+            "daily": totals["daily"],
+            "streak": totals["streak"],
+        },
+        "boss": totals["boss"],
+        "totalWorkouts": total_workouts,
+        "weeklyHistogram": histogram,
+    })

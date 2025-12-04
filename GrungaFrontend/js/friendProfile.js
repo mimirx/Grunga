@@ -16,8 +16,7 @@ const BADGE_CONFIG = {
     CHALLENGE_10: { sectionId: "friend-challenge", img: "assets/images/10challenge.png", label: "Challenge Veteran" }
 };
 
-/* Extract friendId from URL */
-function getUserId() {
+function getUserParam() {
     const params = new URLSearchParams(window.location.search);
     return params.get("userId");
 }
@@ -28,7 +27,6 @@ function renderBadges(badges) {
     if (container) container.innerHTML = '';
 
     if (!Array.isArray(badges) || badges.length === 0) {
-        // Add placeholder like in badges.js for consistency
         const div = document.createElement('div');
         div.classList.add('badge', 'locked');
         const img = document.createElement('img');
@@ -49,7 +47,7 @@ function renderBadges(badges) {
         div.classList.add('badge', badge.unlocked ? 'unlocked' : 'locked');
 
         const img = document.createElement('img');
-        img.src = config.img || 'assets/images/favicon.png'; // Fallback
+        img.src = config.img || 'assets/images/favicon.png';
 
         const label = document.createElement('p');
         label.textContent = config.label;
@@ -62,32 +60,53 @@ function renderBadges(badges) {
 
 /* Load all friend's data */
 async function initProfile() {
-    const friendId = getUserId();
-    if (!friendId) {
-        document.getElementById("friend-name").textContent = "Invalid Friend";
+    const rawParam = getUserParam();
+    const nameEl = document.getElementById("friend-name");
+
+    if (!rawParam) {
+        if (nameEl) nameEl.textContent = "Invalid Friend";
         return;
     }
+
     try {
-        // FIXED: correct user info endpoint
-        // friendId is actually the USERNAME that we stored from friends.js
-        const user = await apiGet(`/users/${friendId}`);
+        // 1️⃣ Normalize whatever we got in ?userId= (username or numeric id)
+        //    by asking /users/<...> and reading user.userId
+        const user = await apiGet(`/users/${rawParam}`);
+        const friendId = user.userId;   // numeric database id
+
         const displayName =
-            user.displayName?.trim() !== "" ? user.displayName : user.username;
-        document.getElementById("friend-name").textContent = displayName;
-        // FIXED: correct points/streak endpoint
-        const points = await apiGet(`/users/${friendId}/points`);
-        document.getElementById("streak").textContent = points.streak ?? 0;
-        document.getElementById("total").textContent = points.total ?? 0;
-        document.getElementById("weekly").textContent = points.weekly ?? 0;
-        document.getElementById("daily").textContent = points.daily ?? 0;
-        // workouts endpoint (yours is correct)
-        const workouts = await apiGet(`/users/${friendId}/workouts`);
-        document.getElementById("workouts").textContent = workouts.total ?? 0;
-        // badges endpoint
+            user.displayName && user.displayName.trim() !== ""
+                ? user.displayName
+                : user.username;
+
+        if (nameEl) {
+            nameEl.textContent = displayName;
+        }
+
+        // 2️⃣ Get stats from the new backend route
+        const summary = await apiGet(`/friends/profile/${friendId}`);
+        const pts = summary.points || {};
+
+        document.getElementById("streak").textContent = pts.streak ?? 0;
+        document.getElementById("total").textContent  = pts.total  ?? 0;
+        document.getElementById("weekly").textContent = pts.weekly ?? 0;
+        document.getElementById("daily").textContent  = pts.daily  ?? 0;
+
+        // Total workouts now comes from backend, no more .total on an array
+        document.getElementById("workouts").textContent =
+            summary.totalWorkouts ?? 0;
+
+        // 3️⃣ Badges endpoint is already working for friends
         const badges = await apiGet(`/badges/user/${friendId}`);
         renderBadges(badges);
+
+        // (Optional) you now ALSO have summary.weeklyHistogram if you
+        // want to draw a chart for the friend's points.
     } catch (err) {
         console.error("Profile load error:", err);
+        if (nameEl) {
+            nameEl.textContent = "Error loading friend profile";
+        }
     }
 }
 
