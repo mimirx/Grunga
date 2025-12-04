@@ -230,25 +230,30 @@ async function loadFriendsData() {
 
     // friends: [{ userId, username, displayName }]
     renderList(friendsList, friends, (f) => {
-      const li = document.createElement("li");
-      li.className = "friend-row";
+    const li = document.createElement("li");
+    li.className = "friend-row friend-clickable";
 
-      const span = document.createElement("span");
-      span.textContent = f.displayName
+    const span = document.createElement("span");
+    span.textContent = f.displayName
         ? `${f.displayName} (@${f.username})`
         : f.username;
 
-      // red X button to remove friend
-      const removeBtn = makeButton(
+    // Clicking the name opens the profile
+    span.addEventListener("click", () => {
+        window.location.href = `friendProfile.html?userId=${f.userId}`;
+    });
+
+    const removeBtn = makeButton(
         "✕",
         () => removeFriend(f.userId),
         "btn-deny"
-      );
+    );
 
-      li.appendChild(span);
-      li.appendChild(removeBtn);
-      return li;
+    li.appendChild(span);
+    li.appendChild(removeBtn);
+    return li;
     });
+
 
   } catch (err) {
     console.error("loadFriendsData failed:", err);

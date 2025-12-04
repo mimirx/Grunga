@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from services.connection import fetchAll, fetchOne, execute
 from mysql.connector.errors import ProgrammingError
 
-bpUsers = Blueprint("users", __name__, url_prefix="/api")
+bpUsers = Blueprint("users", __name__)
 
 
 def _err(message, status=400):
@@ -134,7 +134,7 @@ def getUserByUsername(username: str):
     return (jsonify(row), 200) if row else _err("User not found", 404)
 
 
-@bpUsers.get("/users/<int:userId>")
+@bpUsers.get("/<int:userId>")
 def getUserById(userId: int):
     fields = _users_select_fields()
     row = fetchOne(
@@ -296,6 +296,18 @@ def listFriends(userId: int):
         (userId, userId, userId),
     )
     return jsonify(rows)
+
+@bpUsers.get("/users/<int:userId>/workouts")
+def getUserWorkouts(userId: int):
+    """
+    Returns total count of workouts for a given user.
+    Needed for friend profile page.
+    """
+    row = fetchOne(
+        "SELECT COUNT(*) AS total FROM workouts WHERE userId=%s",
+        (userId,)
+    )
+    return jsonify({"total": row["total"] if row else 0})
 
 @bpUsers.get("/test-streak")
 def test_streak():

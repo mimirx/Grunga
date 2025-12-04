@@ -800,3 +800,136 @@ progress#hp-bar::-webkit-progress-bar {
     font-weight: 700;
     text-shadow: 0 0 10px #00ffa6;
 }
+
+/*ADDED FRIENDS PAGE*/
+
+.friend-clickable span {
+    cursor: pointer;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.friend-clickable span:hover {
+    color: #00ffa6;
+    text-shadow: 0 0 8px #00ffa6;
+}
+
+/* ===== FRIEND PROFILE PAGE ===== */
+
+.friend-profile-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 120px auto 40px auto; /* pushes it under the floating logo */
+    color: white;
+}
+
+.friend-profile-title {
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 25px;
+    text-shadow: 0 0 8px #00ffa6;
+}
+
+.profile-stats {
+    background: #0e1a28;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 35px;
+    border: 1px solid #00ffa6;
+}
+
+.profile-stats p {
+    font-size: 18px;
+    margin: 6px 0;
+}
+
+/* Fix friend profile content alignment */
+.friend-profile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    width: 100%;
+}
+
+.friend-clickable span {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #00ffaa;
+}
+
+.friend-clickable span:hover {
+    text-shadow: 0 0 8px #00ffaa;
+}
+
+/* FRIEND PROFILE — PAGE LAYOUT IMPROVEMENTS */
+.friend-header {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    font-size: 38px;
+    font-weight: bold;
+    color: #00ffaa;
+    text-shadow: 0 0 12px #00ffaa;
+}
+
+.friend-stats-card {
+    width: 70%;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 25px 35px;
+    background: rgba(0, 255, 170, 0.05);
+    border: 2px solid #00ffaa44;
+    border-radius: 15px;
+    box-shadow: 0 0 15px #00ffaa22;
+    color: white;
+    font-size: 18px;
+}
+
+
+.friend-badge-section {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.friend-badge-section h2 {
+    font-size: 30px;
+    color: #00ffaa;
+    margin-bottom: 5px;
+}
+
+.friend-badge-section p {
+    color: #bbbbbb;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+/* BADGE GRID IMPROVED */
+.friend-badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 25px;
+    width: 85%;
+    margin: 0 auto 100px auto;
+}
+
+.badge-item img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+}
+
+.badge-item img.unlocked:hover {
+    transform: scale(1.08);
+}
+
+.badge-item img.locked {
+    opacity: 0.22;
+    filter: grayscale(100%);
+}
+
+.badge-item p {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #cccccc;
+}
+
