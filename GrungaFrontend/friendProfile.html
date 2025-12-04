@@ -6,31 +6,28 @@
     <title>Friend Profile</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-
     <!-- Floating top-left Grunga logo -->
     <div class="grunga-floating-logo" onclick="window.location.href='index.html'">
         <img src="assets/images/favicon.png" class="floating-logo-img">
         <span class="floating-logo-text">Grunga</span>
     </div>
     <h1 class="friend-header" id="friend-name">Loading...</h1>
-
-    <div class="friend-stats-card">
-        <p>🔥 <strong>Streak:</strong> <span id="streak">...</span></p>
-        <p><strong>Total Points:</strong> <span id="total">...</span></p>
-        <p><strong>Weekly Points:</strong> <span id="weekly">...</span></p>
-        <p><strong>Daily Points:</strong> <span id="daily">...</span></p>
-        <p><strong>Total Workouts:</strong> <span id="workouts">...</span></p>
-    </div>
-
-    <div class="friend-badge-section">
-        <h2>Friend's Badges</h2>
-        <p>Badges earned by this user through workouts, challenges, and streaks.</p>
-    </div>
-
-    <div id="friend-badges" class="friend-badges-grid"></div>
-
+    <main class="badge-page">
+        <div class="friend-stats-card">
+            <p>🔥 <strong>Streak:</strong> <span id="streak">...</span></p>
+            <p><strong>Total Points:</strong> <span id="total">...</span></p>
+            <p><strong>Weekly Points:</strong> <span id="weekly">...</span></p>
+            <p><strong>Daily Points:</strong> <span id="daily">...</span></p>
+            <p><strong>Total Workouts:</strong> <span id="workouts">...</span></p>
+        </div>
+        <section class="badge-gallery">
+            <h2>Friend's Badges</h2>
+            <p>Badges earned by this user through workouts, challenges, and streaks.</p>
+            <!-- JS will fill this -->
+            <div id="friend-badges" class="badges-container"></div>
+        </section>
+    </main>
     <nav class="navbar">
         <a href="index.html">Home</a>
         <a href="workouts.html">Workouts</a>
@@ -39,7 +36,6 @@
         <a href="badges.html">Badges</a>
         <a href="help.html">Help</a>
     </nav>
-
     <script type="module" src="js/friendProfile.js"></script>
 </body>
 </html>
