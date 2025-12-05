@@ -20,7 +20,40 @@ def getBossAssetForWeek(dt: datetime) -> str:
     return "week-boss.png" if week_number % 2 == 0 else "week-boss2.png"
 
 def pointsForRow(sets, reps, workoutType):
-    return int(sets) * int(reps)
+    """
+    Calculates workout points with realistic multipliers.
+
+    Cardio (reps = duration in minutes, sets = 1):
+    - run, swim: x2.5 multiplier
+    - bike: x2.0 multiplier
+    - walk: x1.0 multiplier
+
+    Strength (reps = reps, sets = sets):
+    - crunches, lunges, pushups, squats: x1.5 multiplier
+    """
+    base_points = int(sets) * int(reps)
+    multiplier = 1.0
+
+    # Determine multiplier based on workout type
+    if workoutType in ["run", "swim"]:
+        # Run and Swim get x2.5
+        multiplier = 2.5
+    elif workoutType == "bike":
+        # Bike gets x2.0
+        multiplier = 2.0
+    elif workoutType == "walk":
+        # Walk gets x1.0 (default, but explicit for clarity)
+        multiplier = 1.0
+    elif workoutType in ["crunches", "lunges", "pushups", "squats"]:
+        # Crunches, lunges, pushups, squats get x1.5
+        multiplier = 1.5
+    
+    # Calculate final points and round to the nearest whole number
+    final_points = round(base_points * multiplier)
+    
+    # Ensure the minimum points is 0
+    return max(0, final_points)
+
 
 def recomputeTotalsForUser(userId: int) -> dict:
     now = nowCt()
