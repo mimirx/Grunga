@@ -8,9 +8,15 @@ The project was developed as a **software engineering capstone project** and dem
 
 ---
 
+## Live Application
+https://grunga1.netlify.app
+
 ## Live API
 
 🔗 https://grunga-production.up.railway.app
+
+Health Check
+https://grunga-production.up.railway.app/api/health
 
 ---
 
