@@ -122,6 +122,40 @@ Badges remain locked until the required conditions are met.
 
 The application follows a layered architecture separating the frontend, backend API, service logic, and database.
 
+```text
+┌──────────────────────┐
+│      Frontend        │
+│  HTML / CSS / JS     │
+│  (GrungaFrontend)    │
+└───────────┬──────────┘
+            │
+            │ HTTP Requests
+            ▼
+┌──────────────────────┐
+│      Flask API       │
+│       app.py         │
+│   (Blueprint Routes) │
+└───────────┬──────────┘
+            │
+            ▼
+┌──────────────────────┐
+│     Service Layer    │
+│  points_service      │
+│  challenges_service  │
+│  badges_service      │
+│  friends_service     │
+│  scheduler_service   │
+└───────────┬──────────┘
+            │
+            ▼
+┌──────────────────────┐
+│       MySQL DB       │
+│      schema.sql      │
+│ users, workouts,     │
+│ challenges, badges   │
+└──────────────────────┘
+```
+
 ---
 
 # Backend Architecture
