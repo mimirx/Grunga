@@ -8,6 +8,12 @@ The project was developed as a **software engineering capstone project** and dem
 
 ---
 
+## Live API
+
+🔗 https://grunga-production.up.railway.app
+
+---
+
 ## Project Goal
 
 Many people begin exercising with motivation but struggle to maintain long-term consistency. Traditional fitness apps simply log workouts, which can feel repetitive and unrewarding.
