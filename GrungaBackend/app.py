@@ -12,14 +12,20 @@ from routes.badges import bpBadges
 def createApp():
     app = Flask(__name__)
 
-    # FIXED: Global CORS, supports credentials, no broken regex
     CORS(app, supports_credentials=True)
+
+    @app.route("/")
+    def home():
+        return jsonify({
+            "project": "Grunga API",
+            "status": "running",
+            "health": "/api/health"
+        })
 
     @app.route("/api/health")
     def health():
         return jsonify({"ok": True})
 
-    # Blueprints
     app.register_blueprint(bpWorkouts, url_prefix="/api")
     app.register_blueprint(bpUsers, url_prefix="/api/users")
     app.register_blueprint(friendsBlueprint, url_prefix="/api/friends")
@@ -29,12 +35,10 @@ def createApp():
     return app
 
 
-
 app = createApp()
 
 
 if __name__ == "__main__":
-    # IMPORTANT: Only run scheduler in MAIN process, NOT in reloader!
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         try:
             from services.scheduler_service import startScheduler
