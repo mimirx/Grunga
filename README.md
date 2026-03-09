@@ -8,7 +8,7 @@ The project was developed as a **software engineering capstone project** and dem
 
 ---
 
-# Project Goal
+## Project Goal
 
 Many people begin exercising with motivation but struggle to maintain long-term consistency. Traditional fitness apps simply log workouts, which can feel repetitive and unrewarding.
 
@@ -26,9 +26,9 @@ These mechanics create motivation through progression and friendly competition.
 
 ---
 
-# Key Features
+## Key Features
 
-## Workout Logging
+### Workout Logging
 
 Users can log workouts including:
 
@@ -41,7 +41,7 @@ Points are automatically calculated based on workout activity.
 
 ---
 
-## Points System
+### Points System
 
 Workout activity generates points which contribute to three totals:
 
@@ -53,7 +53,7 @@ Points are stored in a ledger system and recalculated dynamically.
 
 ---
 
-## Streak System
+### Streak System
 
 Users maintain daily streaks by staying active.
 
@@ -61,7 +61,7 @@ If a user logs workouts on consecutive days, their streak increases.
 
 ---
 
-## Weekly Boss Battles
+### Weekly Boss Battles
 
 Each week features a **boss with 500 HP**.
 
@@ -73,7 +73,7 @@ The boss resets at the start of every week.
 
 ---
 
-## Friend System
+### Friend System
 
 Users can interact socially within the app by:
 
@@ -85,7 +85,7 @@ Users can interact socially within the app by:
 
 ---
 
-## Challenges
+### Challenges
 
 Friends can send workout challenges to each other.
 
@@ -103,7 +103,7 @@ Rewards:
 
 ---
 
-## Badge System
+### Badge System
 
 Badges reward users for reaching milestones.
 
@@ -118,7 +118,7 @@ Badges remain locked until the required conditions are met.
 
 ---
 
-# System Architecture
+## System Architecture
 
 The application follows a layered architecture separating the frontend, backend API, service logic, and database.
 
@@ -158,11 +158,11 @@ The application follows a layered architecture separating the frontend, backend 
 
 ---
 
-# Backend Architecture
+## Backend Architecture
 
 The backend is built using **Python Flask** and organized into modular components.
 
-## Routes
+### Routes
 
 Flask Blueprints define API endpoints for different features:
 
@@ -177,7 +177,7 @@ These endpoints allow the frontend to communicate with the backend.
 
 ---
 
-## Service Layer
+### Service Layer
 
 The service layer contains the core application logic such as:
 
@@ -191,7 +191,7 @@ This separation keeps route handlers clean and maintainable.
 
 ---
 
-## Scheduler
+### Scheduler
 
 The backend includes a background scheduler using **APScheduler**.
 
@@ -204,7 +204,7 @@ This allows the application to automatically handle time-based mechanics.
 
 ---
 
-# Database Design
+## Database Design
 
 Grunga uses a **MySQL relational database**.
 
@@ -223,25 +223,25 @@ Foreign keys and constraints maintain relational integrity.
 
 ---
 
-# Tech Stack
+## Tech Stack
 
-## Backend
+### Backend
 
 - Python
 - Flask
 - APScheduler
 
-## Database
+### Database
 
 - MySQL
 
-## Frontend
+### Frontend
 
 - HTML
 - CSS
 - JavaScript
 
-## Development Tools
+### Development Tools
 
 - Python Virtual Environment
 - MySQL Workbench
@@ -249,14 +249,14 @@ Foreign keys and constraints maintain relational integrity.
 
 ---
 
-# Running the Project
+## Running the Project
 
-## 1 Install dependencies
+### 1 Install dependencies
 pip install -r requirements.txt
 
 ---
 
-## 2 Create the database
+### 2 Create the database
 
 Create a MySQL database named:
 grunga
@@ -265,7 +265,7 @@ Import the provided SQL schema.
 
 ---
 
-## 3 Configure database connection
+### 3 Configure database connection
 
 Edit the database configuration file:
 GrungaBackend/config.py
@@ -280,7 +280,7 @@ DB_CONFIG = {
 
 ---
 
-## 4 Run the backend server
+### 4 Run the backend server
 python app.py
 
 The API will run on:
@@ -288,7 +288,7 @@ http://127.0.0.1:5000
 
 ---
 
-## 5 Run the frontend
+### 5 Run the frontend
 
 Open the frontend in your browser:
 GrungaFrontend/index.html
@@ -296,7 +296,7 @@ Or use **Live Server** in VS Code.
 
 ---
 
-# Team
+## Team
 
 ### Miro Marinov
 Backend Developer
@@ -324,7 +324,7 @@ Responsible for:
 
 ---
 
-# Future Improvements
+## Future Improvements
 
 Potential improvements include:
 
@@ -337,7 +337,7 @@ Potential improvements include:
 
 ---
 
-# Summary
+## Summary
 
 Grunga demonstrates the design and development of a complete full-stack application combining backend services, database modeling, and frontend interfaces.
 
