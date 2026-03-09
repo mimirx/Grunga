@@ -1,6 +1,8 @@
 # Grunga
 
-**Grunga** is a full-stack gamified workout tracking application designed to motivate users to stay consistent with exercise by combining fitness tracking with game mechanics such as points, streaks, badges, boss battles, and social challenges.
+![Python](https://img.shields.io/badge/Python-3.x-blue) ![Flask](https://img.shields.io/badge/Flask-Backend-black) ![MySQL](https://img.shields.io/badge/MySQL-Database-orange) ![APScheduler](https://img.shields.io/badge/APScheduler-Scheduler-green) ![Frontend](https://img.shields.io/badge/Frontend-HTML%20CSS%20JavaScript-blueviolet) ![Project](https://img.shields.io/badge/Project-Full%20Stack%20Application-success)
+
+**Grunga** is a full-stack gamified workout tracking application designed to help users stay consistent with exercise through points, streaks, boss battles, badges, and social challenges.
 
 The project was developed as a **software engineering capstone project** and demonstrates backend architecture design, REST API development, relational database modeling, and gamification systems.
 
