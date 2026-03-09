@@ -4,7 +4,7 @@ import { apiGet } from './api.js';
 // USER SWITCH SETUP (SAME AS INDEX)
 // ------------------------------
 
-let currentUser = localStorage.getItem("currentUser") || "demo1";
+localStorage.setItem("grungaUser", btn.dataset.user);
 
 // get all switch buttons
 const userButtons = document.querySelectorAll("#user-switcher .user-btn");
