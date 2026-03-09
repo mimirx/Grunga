@@ -266,6 +266,12 @@ Foreign keys and constraints maintain relational integrity.
 - MySQL Workbench
 - VS Code
 
+### Deployment
+
+- Netlify — frontend hosting
+- Railway — backend API hosting
+- Aiven — managed MySQL database
+
 ---
 
 ## Running the Project
