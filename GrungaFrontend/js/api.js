@@ -1,4 +1,7 @@
-export const API_BASE = (window.API_BASE || 'http://127.0.0.1:5000/api');
+export const API_BASE =
+  window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
+    ? "http://127.0.0.1:5000/api"
+    : "https://grunga-production.up.railway.app/api";
 
 // ===== Demo user switcher =====
 let currentUser = localStorage.getItem("grungaUser") || "demo1";
