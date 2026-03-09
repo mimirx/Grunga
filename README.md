@@ -8,15 +8,22 @@ The project was developed as a **software engineering capstone project** and dem
 
 ---
 
-## Live Application
+## Live Deployment
+
+The application is fully deployed using a cloud-based architecture.
+
+Frontend (Netlify)
 https://grunga1.netlify.app
 
-## Live API
+Backend API (Railway)
+https://grunga-production.up.railway.app
 
-🔗 https://grunga-production.up.railway.app
-
-Health Check
+API Health Check
 https://grunga-production.up.railway.app/api/health
+
+The frontend communicates with the backend via REST API requests.
+The backend is connected to a MySQL database and handles application logic,
+points calculations, challenges, and scheduler tasks.
 
 ---
 
@@ -341,7 +348,6 @@ Responsible for:
 Potential improvements include:
 
 - user authentication system
-- cloud deployment
 - push notifications
 - expanded exercise library
 - analytics dashboards
