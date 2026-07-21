@@ -104,7 +104,7 @@ def health():
     return jsonify(ok=True)
 
 
-@bpUsers.get("/users")
+@bpUsers.get("")
 def listOrSearchUsers():
     """
     GET /api/users
@@ -124,16 +124,6 @@ def listOrSearchUsers():
     return jsonify(rows)
 
 
-@bpUsers.get("/users/<string:username>")
-def getUserByUsername(username: str):
-    fields = _users_select_fields()
-    row = fetchOne(
-        f"SELECT {fields} FROM users WHERE username=%s",
-        (username,),
-    )
-    return (jsonify(row), 200) if row else _err("User not found", 404)
-
-
 @bpUsers.get("/<int:userId>")
 def getUserById(userId: int):
     fields = _users_select_fields()
@@ -144,7 +134,7 @@ def getUserById(userId: int):
     return (jsonify(row), 200) if row else _err("User not found", 404)
 
 
-@bpUsers.post("/users")
+@bpUsers.post("")
 def createUser():
     """
     POST /api/users
@@ -187,7 +177,7 @@ def createUser():
     return jsonify(row), 201
 
 
-@bpUsers.patch("/users/<int:userId>")
+@bpUsers.patch("/<int:userId>")
 def updateUser(userId: int):
     """
     PATCH /api/users/<userId>
@@ -218,47 +208,7 @@ def updateUser(userId: int):
     return (jsonify(row), 200) if row else _err("User not found", 404)
 
 
-@bpUsers.get("/users/<int:userId>/points")
-def getPoints(userId: int):
-    """
-    GET /api/users/<userId>/points
-    Returns {dailyPoints, weeklyPoints, totalPoints, streak}.
-    Falls back to computing from pointsLedger if pointsTotals is missing/empty.
-    """
-    # 1) Get daily/weekly/total points the same way as before
-    row = _get_totals_from_pointsTotals(userId)
-    if not row:
-        row = _get_totals_fallback_from_ledger(userId)
-
-    # Ensure we have a dict with defaults
-    row = row or {"dailyPoints": 0, "weeklyPoints": 0, "totalPoints": 0}
-
-    # 2) Get streak from pointsTotals (default 0 if anything is missing)
-    streak = 0
-    try:
-        # Only try if the column exists (keeps old dev DBs safe)
-        if _table_has_column("pointsTotals", "streak"):
-            srow = fetchOne(
-                "SELECT streak FROM pointsTotals WHERE userId=%s",
-                (userId,),
-            )
-            if srow and srow.get("streak") is not None:
-                streak = int(srow["streak"])
-    except ProgrammingError:
-        # If the table/column is missing on some DB, just leave streak = 0
-        pass
-
-    # 3) Return combined result INCLUDING streak
-    return jsonify({
-        "dailyPoints": row.get("dailyPoints", 0),
-        "weeklyPoints": row.get("weeklyPoints", 0),
-        "totalPoints": row.get("totalPoints", 0),
-        "streak": streak,
-    })
-
-
-
-@bpUsers.get("/users/<int:userId>/totals")
+@bpUsers.get("/<int:userId>/totals")
 def getUserTotals(userId: int):
     """
     GET /api/users/<userId>/totals
@@ -276,7 +226,7 @@ def getUserTotals(userId: int):
     })
 
 
-@bpUsers.get("/users/<int:userId>/friends")
+@bpUsers.get("/<int:userId>/friends")
 def listFriends(userId: int):
     """
     GET /api/users/<userId>/friends
@@ -296,18 +246,6 @@ def listFriends(userId: int):
         (userId, userId, userId),
     )
     return jsonify(rows)
-
-@bpUsers.get("/users/<int:userId>/workouts")
-def getUserWorkouts(userId: int):
-    """
-    Returns total count of workouts for a given user.
-    Needed for friend profile page.
-    """
-    row = fetchOne(
-        "SELECT COUNT(*) AS total FROM workouts WHERE userId=%s",
-        (userId,)
-    )
-    return jsonify({"total": row["total"] if row else 0})
 
 @bpUsers.get("/test-streak")
 def test_streak():

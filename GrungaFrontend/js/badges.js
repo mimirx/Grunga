@@ -1,22 +1,20 @@
-import { apiGet } from './api.js';
+import { apiGet, getCurrentUser, setCurrentUser } from './api.js';
 
 // ------------------------------
 // USER SWITCH SETUP (SAME AS INDEX)
 // ------------------------------
-
-localStorage.setItem("grungaUser", btn.dataset.user);
 
 // get all switch buttons
 const userButtons = document.querySelectorAll("#user-switcher .user-btn");
 
 // highlight active button
 userButtons.forEach(btn => {
-    if (btn.dataset.user === currentUser) {
+    if (btn.dataset.user === getCurrentUser()) {
         btn.classList.add("active");
     }
 
     btn.addEventListener("click", () => {
-        localStorage.setItem("currentUser", btn.dataset.user);
+        setCurrentUser(btn.dataset.user);
         location.reload();   // reload badges page with selected user
     });
 });
@@ -35,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initBadgesPage() {
-    const username = currentUser;
+    const username = getCurrentUser();
     const userId = usernameToId(username);
 
     try {

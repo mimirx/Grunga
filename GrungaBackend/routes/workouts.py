@@ -70,9 +70,6 @@ def createWorkout(userId):
     # Recompute totals
     totals = recomputeTotalsForUser(userId)
     newDaily = totals["daily"]
-    earnedPoints = sets * reps
-    prevDaily = newDaily - earnedPoints
-
     # ============ FIRST WORKOUT BADGE ============
     with dbCursor() as db:
         db.execute("SELECT COUNT(*) AS c FROM workouts WHERE userId=%s", (userId,))
@@ -80,15 +77,6 @@ def createWorkout(userId):
         if row and row["c"] == 1:
             unlockBadge(userId, "FIRST_WORKOUT")
 
-
-    # ============ STREAK LOGIC ============
-    if prevDaily < 100 and newDaily >= 100:
-        with dbCursor(commit=True) as db:
-            db.execute("""
-                UPDATE pointsTotals
-                SET streak = streak + 1
-                WHERE userId=%s
-            """, (userId,))
 
     return jsonify({"ok": True, "workoutId": wid, "totals": totals}), 201
 
